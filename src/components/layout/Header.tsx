@@ -15,11 +15,12 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   const displayName = profile?.full_name ?? user?.email ?? 'Akun';
   const roleLabel = useMemo(() => {
-    if (!profile?.role) {
+    const role = profile?.role ?? user?.role;
+    if (!role) {
       return 'User';
     }
-    return profile.role.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase());
-  }, [profile?.role]);
+    return role.replace('_', ' ').replace(/\b\w/g, char => char.toUpperCase());
+  }, [profile?.role, user?.role]);
 
   const initials = useMemo(() => {
     const parts = displayName.trim().split(' ').filter(Boolean);
