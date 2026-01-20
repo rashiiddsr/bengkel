@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FileText, Car, Clock, CheckCircle, Plus } from 'lucide-react';
 import { Card, CardHeader, CardBody, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ServiceRequest } from '../../lib/database.types';
 
@@ -19,16 +19,13 @@ export function CustomerDashboard() {
   const fetchRequests = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('service_requests')
-      .select('*')
-      .eq('customer_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(5);
+    const data = await api.listServiceRequests({
+      customer_id: user.id,
+      order: 'created_at.desc',
+      limit: 5,
+    });
 
-    if (!error && data) {
-      setRequests(data);
-    }
+    setRequests(data);
     setLoading(false);
   };
 

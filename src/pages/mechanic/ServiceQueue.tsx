@@ -3,7 +3,7 @@ import { Card, CardBody } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Input, TextArea, Select } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Edit } from 'lucide-react';
 
@@ -26,16 +26,14 @@ export function ServiceQueue() {
   const fetchJobs = async () => {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('service_requests')
-      .select('*, vehicle:vehicles(*), customer:profiles!service_requests_customer_id_fkey(*)')
-      .eq('assigned_mechanic_id', user.id)
-      .in('status', ['approved', 'in_progress', 'parts_needed', 'quality_check'])
-      .order('created_at', { ascending: false });
+    const data = await api.listServiceRequests({
+      assigned_mechanic_id: user.id,
+      status: 'approved,in_progress,parts_needed,quality_check',
+      include: 'vehicle,customer',
+      order: 'created_at.desc',
+    });
 
-    if (data) {
-      setJobs(data);
-    }
+    setJobs(data);
     setLoading(false);
   };
 
@@ -60,22 +58,16 @@ export function ServiceQueue() {
       updates.final_cost = parseFloat(editForm.finalCost);
     }
 
-    const { error } = await supabase
-      .from('service_requests')
-      .update(updates)
-      .eq('id', selectedJob.id);
-
-    if (!error) {
-      await supabase.from('status_history').insert({
+    await api.updateServiceRequest(selectedJob.id, updates);
+    await api.createStatusHistory({
         service_request_id: selectedJob.id,
         status: editForm.status,
         notes: editForm.mechanicNotes,
         changed_by: user.id,
       });
 
-      setSelectedJob(null);
-      fetchJobs();
-    }
+    setSelectedJob(null);
+    fetchJobs();
   };
 
   const getStatusColor = (status: string) => {

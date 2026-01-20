@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
 import type { Profile } from '../lib/database.types';
+import { api, type AuthUser } from '../lib/api';
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -16,23 +15,18 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (error) {
+    try {
+      const profiles = await api.listProfiles({ id: userId });
+      return profiles[0] ?? null;
+    } catch (error) {
       console.error('Error fetching profile:', error);
       return null;
     }
-
-    return data;
   };
 
   const refreshProfile = async () => {
@@ -43,40 +37,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      (async () => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          const profileData = await fetchProfile(session.user.id);
-          setProfile(profileData);
-        }
+    const loadSession = async () => {
+      try {
+        const sessionData = await api.getSession();
+        setUser(sessionData.user);
+        setProfile(sessionData.profile);
+      } catch (error) {
+        console.error('Error fetching session:', error);
+        setUser(null);
+        setProfile(null);
+      } finally {
         setLoading(false);
-      })();
-    });
+      }
+    };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      (async () => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          const profileData = await fetchProfile(session.user.id);
-          setProfile(profileData);
-        } else {
-          setProfile(null);
-        }
-      })();
-    });
-
-    return () => subscription.unsubscribe();
+    loadSession();
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
+      const sessionData = await api.login(email, password);
+      setUser(sessionData.user);
+      setProfile(sessionData.profile);
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -85,25 +67,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string, phone: string) => {
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const sessionData = await api.register({
         email,
         password,
+        full_name: fullName,
+        phone,
       });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('User creation failed');
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user.id,
-          full_name: fullName,
-          role: 'customer',
-          phone,
-        });
-
-      if (profileError) throw profileError;
-
+      setUser(sessionData.user);
+      setProfile(sessionData.profile);
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -111,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await api.logout();
     setUser(null);
     setProfile(null);
   };

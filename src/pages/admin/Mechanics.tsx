@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/ui/Card';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import type { Profile } from '../../lib/database.types';
 import { Wrench } from 'lucide-react';
 
@@ -14,26 +14,19 @@ export function Mechanics() {
   }, []);
 
   const fetchMechanics = async () => {
-    const { data: mechanicsData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'mechanic')
-      .order('full_name');
+    const mechanicsData = await api.listProfiles({ role: 'mechanic', order: 'full_name.asc' });
 
     if (mechanicsData) {
       setMechanics(mechanicsData);
 
       const stats: Record<string, any> = {};
       for (const mechanic of mechanicsData) {
-        const { data: requests } = await supabase
-          .from('service_requests')
-          .select('*')
-          .eq('assigned_mechanic_id', mechanic.id);
+        const requests = await api.listServiceRequests({ assigned_mechanic_id: mechanic.id });
 
         stats[mechanic.id] = {
-          total: requests?.length || 0,
-          inProgress: requests?.filter(r => ['approved', 'in_progress', 'parts_needed', 'quality_check'].includes(r.status)).length || 0,
-          completed: requests?.filter(r => r.status === 'completed').length || 0,
+          total: requests.length || 0,
+          inProgress: requests.filter(r => ['approved', 'in_progress', 'parts_needed', 'quality_check'].includes(r.status)).length || 0,
+          completed: requests.filter(r => r.status === 'completed').length || 0,
         };
       }
       setMechanicStats(stats);

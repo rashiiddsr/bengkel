@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/ui/Card';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import type { Profile } from '../../lib/database.types';
 import { Users } from 'lucide-react';
 
@@ -14,11 +14,7 @@ export function Customers() {
   }, []);
 
   const fetchCustomers = async () => {
-    const { data: customersData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'customer')
-      .order('full_name');
+    const customersData = await api.listProfiles({ role: 'customer', order: 'full_name.asc' });
 
     if (customersData) {
       setCustomers(customersData);
@@ -26,13 +22,13 @@ export function Customers() {
       const stats: Record<string, any> = {};
       for (const customer of customersData) {
         const [requestsRes, vehiclesRes] = await Promise.all([
-          supabase.from('service_requests').select('*').eq('customer_id', customer.id),
-          supabase.from('vehicles').select('*').eq('customer_id', customer.id),
+          api.listServiceRequests({ customer_id: customer.id }),
+          api.listVehicles({ customer_id: customer.id }),
         ]);
 
         stats[customer.id] = {
-          totalRequests: requestsRes.data?.length || 0,
-          totalVehicles: vehiclesRes.data?.length || 0,
+          totalRequests: requestsRes.length || 0,
+          totalVehicles: vehiclesRes.length || 0,
         };
       }
       setCustomerStats(stats);

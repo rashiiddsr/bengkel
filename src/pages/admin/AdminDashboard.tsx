@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Users, Wrench, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card, CardBody } from '../../components/ui/Card';
-import { supabase } from '../../lib/supabase';
-import type { ServiceRequest, Profile } from '../../lib/database.types';
+import { api } from '../../lib/api';
 
 export function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -22,21 +21,20 @@ export function AdminDashboard() {
   }, []);
 
   const fetchDashboardData = async () => {
-    const [requestsRes, mechanicsRes, customersRes] = await Promise.all([
-      supabase.from('service_requests').select('*, customer:profiles!service_requests_customer_id_fkey(*), vehicle:vehicles(*)'),
-      supabase.from('profiles').select('*').eq('role', 'mechanic'),
-      supabase.from('profiles').select('*').eq('role', 'customer'),
+    const [requests, mechanics, customers] = await Promise.all([
+      api.listServiceRequests({ include: 'customer,vehicle', order: 'created_at.desc' }),
+      api.listProfiles({ role: 'mechanic', order: 'full_name.asc' }),
+      api.listProfiles({ role: 'customer', order: 'full_name.asc' }),
     ]);
 
-    if (requestsRes.data) {
-      const requests = requestsRes.data;
+    if (requests) {
       setStats({
         totalRequests: requests.length,
         pendingRequests: requests.filter(r => r.status === 'pending').length,
         inProgressRequests: requests.filter(r => ['approved', 'in_progress', 'parts_needed', 'quality_check'].includes(r.status)).length,
         completedRequests: requests.filter(r => r.status === 'completed').length,
-        totalMechanics: mechanicsRes.data?.length || 0,
-        totalCustomers: customersRes.data?.length || 0,
+        totalMechanics: mechanics?.length || 0,
+        totalCustomers: customers?.length || 0,
       });
       setRecentRequests(requests.slice(0, 5));
     }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardHeader, CardBody, CardTitle } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ServiceRequest, Vehicle, StatusHistory, Profile } from '../../lib/database.types';
 import { Eye, Clock } from 'lucide-react';
@@ -26,30 +26,22 @@ export function MyRequests() {
   const fetchRequests = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('service_requests')
-      .select(`
-        *,
-        vehicle:vehicles(*),
-        mechanic:profiles!service_requests_assigned_mechanic_id_fkey(*)
-      `)
-      .eq('customer_id', user.id)
-      .order('created_at', { ascending: false });
+    const data = await api.listServiceRequests({
+      customer_id: user.id,
+      include: 'vehicle,mechanic',
+      order: 'created_at.desc',
+    });
 
-    if (!error && data) {
-      setRequests(data as RequestWithDetails[]);
-    }
+    setRequests(data as RequestWithDetails[]);
     setLoading(false);
   };
 
   const fetchHistory = async (requestId: string) => {
-    const { data } = await supabase
-      .from('status_history')
-      .select('*, changed_by_profile:profiles!status_history_changed_by_fkey(*)')
-      .eq('service_request_id', requestId)
-      .order('created_at', { ascending: false });
-
-    return data || [];
+    return api.listStatusHistory({
+      service_request_id: requestId,
+      include: 'changed_by_profile',
+      order: 'created_at.desc',
+    });
   };
 
   const handleViewDetails = async (request: RequestWithDetails) => {

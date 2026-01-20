@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye } from 'lucide-react';
 
@@ -19,16 +19,14 @@ export function CompletedJobs() {
   const fetchJobs = async () => {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('service_requests')
-      .select('*, vehicle:vehicles(*), customer:profiles!service_requests_customer_id_fkey(*)')
-      .eq('assigned_mechanic_id', user.id)
-      .eq('status', 'completed')
-      .order('updated_at', { ascending: false });
+    const data = await api.listServiceRequests({
+      assigned_mechanic_id: user.id,
+      status: 'completed',
+      include: 'vehicle,customer',
+      order: 'updated_at.desc',
+    });
 
-    if (data) {
-      setJobs(data);
-    }
+    setJobs(data);
     setLoading(false);
   };
 

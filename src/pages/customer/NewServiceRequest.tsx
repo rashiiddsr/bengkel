@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardBody, CardTitle } from '../../components/ui/Card';
 import { Input, TextArea, Select } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Vehicle } from '../../lib/database.types';
 
@@ -50,44 +50,39 @@ export function NewServiceRequest() {
   const fetchVehicles = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('vehicles')
-      .select('*')
-      .eq('customer_id', user.id)
-      .order('created_at', { ascending: false });
+    const data = await api.listVehicles({
+      customer_id: user.id,
+      order: 'created_at.desc',
+    });
 
-    if (!error && data) {
-      setVehicles(data);
-    }
+    setVehicles(data);
   };
 
   const handleAddVehicle = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('vehicles')
-      .insert({
+    try {
+      const data = await api.createVehicle({
         customer_id: user.id,
-        ...newVehicle,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      setError(error.message);
-      return;
-    }
-
-    if (data) {
-      setVehicles([data, ...vehicles]);
-      setFormData({ ...formData, vehicleId: data.id });
-      setShowNewVehicle(false);
-      setNewVehicle({
-        make: '',
-        model: '',
-        year: new Date().getFullYear(),
-        licensePlate: '',
+        make: newVehicle.make,
+        model: newVehicle.model,
+        year: newVehicle.year,
+        license_plate: newVehicle.licensePlate,
       });
+
+      if (data) {
+        setVehicles([data, ...vehicles]);
+        setFormData({ ...formData, vehicleId: data.id });
+        setShowNewVehicle(false);
+        setNewVehicle({
+          make: '',
+          model: '',
+          year: new Date().getFullYear(),
+          licensePlate: '',
+        });
+      }
+    } catch (error) {
+      setError((error as Error).message);
     }
   };
 
@@ -104,9 +99,8 @@ export function NewServiceRequest() {
 
     setLoading(true);
 
-    const { error: insertError } = await supabase
-      .from('service_requests')
-      .insert({
+    try {
+      await api.createServiceRequest({
         customer_id: user.id,
         vehicle_id: formData.vehicleId,
         service_type: formData.serviceType,
@@ -114,9 +108,8 @@ export function NewServiceRequest() {
         preferred_date: formData.preferredDate || null,
         status: 'pending',
       });
-
-    if (insertError) {
-      setError(insertError.message);
+    } catch (error) {
+      setError((error as Error).message);
       setLoading(false);
       return;
     }

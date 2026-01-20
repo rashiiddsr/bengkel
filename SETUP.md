@@ -1,6 +1,6 @@
 # AutoService - Automotive Service Management System
 
-A comprehensive web-based automotive service management system built with React, TypeScript, Supabase, and Tailwind CSS.
+A comprehensive web-based automotive service management system built with React, TypeScript, MySQL, and Tailwind CSS.
 
 ## Features
 
@@ -49,8 +49,8 @@ A comprehensive web-based automotive service management system built with React,
 
 - **Frontend**: React 18 with TypeScript
 - **Styling**: Tailwind CSS with AdminLTE-inspired design
-- **Backend**: Supabase (PostgreSQL database with Row Level Security)
-- **Authentication**: Supabase Auth
+- **Backend**: Custom API with MySQL
+- **Authentication**: API-driven auth
 - **Routing**: React Router v6
 - **State Management**: React Context API
 
@@ -58,7 +58,8 @@ A comprehensive web-based automotive service management system built with React,
 
 ### Prerequisites
 - Node.js 16+
-- Supabase account and project
+- MySQL 8+
+- API service running locally
 
 ### Installation
 
@@ -67,28 +68,36 @@ A comprehensive web-based automotive service management system built with React,
 npm install
 ```
 
-2. The Supabase database is already configured with environment variables.
+2. Configure the frontend environment:
+```bash
+echo "VITE_API_BASE_URL=http://localhost:3000" > .env
+```
 
-3. Start the development server:
+3. Import the MySQL schema:
+```bash
+mysql -u root -p < database/schema.sql
+```
+
+4. Start the development server:
 ```bash
 npm run dev
 ```
 
-4. Build for production:
+5. Build for production:
 ```bash
 npm run build
 ```
 
 ## Database Structure
 
-The system uses the following database tables:
+The system uses the following MySQL tables:
 - `profiles` - User profiles with role information
 - `vehicles` - Customer vehicle information
 - `service_requests` - Service request details and status
 - `status_history` - Audit trail of status changes
 - `service_photos` - Documentation photos (optional)
 
-All tables are protected with Row Level Security (RLS) policies ensuring data isolation and security.
+All tables are managed by the API service for data access and authorization.
 
 ## User Roles
 
@@ -100,19 +109,13 @@ To test the system, you can create users with different roles:
    - Register at `/register`
    - Default role: customer
 
-2. **Admin Account** (requires database access)
-   - Create a user via registration
-   - Update the role in the profiles table:
-   ```sql
-   UPDATE profiles SET role = 'admin' WHERE id = 'user-id-here';
-   ```
+2. **Admin Account** (pre-seeded in schema)
+   - Email: `admin@gmail.com`
+   - Password: `admin`
 
-3. **Mechanic Account** (requires database access)
-   - Create a user via registration
-   - Update the role in the profiles table:
-   ```sql
-   UPDATE profiles SET role = 'mechanic' WHERE id = 'user-id-here';
-   ```
+3. **Superadmin Account** (pre-seeded in schema)
+   - Email: `superadmin@gmail.com`
+   - Password: `superadmin`
 
 ## Features Highlight
 
@@ -127,10 +130,9 @@ To test the system, you can create users with different roles:
 - Touch-friendly interface
 
 ### Security
-- Row Level Security on all tables
 - Authentication required for all operations
 - Role-based access control
-- Secure data isolation
+- API-enforced data access policies
 
 ### Real-time Updates
 - Status changes tracked with history
@@ -149,8 +151,12 @@ src/
 │   ├── AuthContext.tsx
 │   └── ThemeContext.tsx
 ├── lib/                 # Utilities and configurations
-│   ├── supabase.ts
+│   ├── api.ts
 │   └── database.types.ts
+database/
+├── schema.sql           # MySQL schema & seed data
+api/
+└── .env                 # API environment variables
 ├── pages/
 │   ├── admin/          # Admin module pages
 │   ├── customer/       # Customer module pages
