@@ -43,7 +43,8 @@ export function Header({ onMenuClick }: HeaderProps) {
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 lg:px-6">
       <button
         onClick={onMenuClick}
-        className="lg:hidden text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+        aria-label="Toggle sidebar"
+        className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
       >
         <Menu className="h-6 w-6" />
       </button>
