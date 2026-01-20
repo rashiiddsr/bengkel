@@ -4,7 +4,12 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 
 export function DashboardLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.innerWidth >= 1024;
+  });
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100 dark:bg-gray-900">
