@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import type { ServiceRequest, Vehicle, StatusHistory, Profile } from '../../lib/database.types';
 import { Eye, Clock } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { formatCurrency, formatDate, formatDateTime, formatStatus } from '../../lib/format';
 
 interface RequestWithDetails extends ServiceRequest {
   vehicle?: Vehicle;
@@ -65,18 +66,18 @@ export function MyRequests() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        My Service Requests
+        Permintaan Servis Saya
       </h1>
 
       <Card>
         <CardBody>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              Loading...
+              Memuat...
             </p>
           ) : requests.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              No service requests found
+              Tidak ada permintaan servis
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -84,19 +85,19 @@ export function MyRequests() {
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Service Type
+                      Jenis Servis
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Vehicle
+                      Kendaraan
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Date
+                      Tanggal
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Actions
+                      Aksi
                     </th>
                   </tr>
                 </thead>
@@ -111,11 +112,11 @@ export function MyRequests() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(request.status)}`}>
-                          {request.status.replace('_', ' ').toUpperCase()}
+                          {formatStatus(request.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(request.created_at).toLocaleDateString()}
+                        {formatDate(request.created_at)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <Button
@@ -124,7 +125,7 @@ export function MyRequests() {
                           onClick={() => handleViewDetails(request)}
                         >
                           <Eye className="h-4 w-4 mr-1" />
-                          View
+                          Lihat
                         </Button>
                       </td>
                     </tr>
@@ -139,14 +140,14 @@ export function MyRequests() {
       <Modal
         isOpen={!!selectedRequest}
         onClose={() => setSelectedRequest(null)}
-        title="Service Request Details"
+        title="Detail Permintaan Servis"
         size="lg"
       >
         {selectedRequest && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Service Type</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Jenis Servis</p>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {selectedRequest.service_type}
                 </p>
@@ -154,26 +155,26 @@ export function MyRequests() {
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
                 <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(selectedRequest.status)}`}>
-                  {selectedRequest.status.replace('_', ' ').toUpperCase()}
+                  {formatStatus(selectedRequest.status)}
                 </span>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Vehicle</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Kendaraan</p>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {selectedRequest.vehicle?.make} {selectedRequest.vehicle?.model} ({selectedRequest.vehicle?.license_plate})
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Assigned Mechanic</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Mekanik Ditugaskan</p>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  {selectedRequest.mechanic?.full_name || 'Not assigned yet'}
+                  {selectedRequest.mechanic?.full_name || 'Belum ditugaskan'}
                 </p>
               </div>
             </div>
 
             {selectedRequest.description && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Description</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Deskripsi</p>
                 <p className="text-gray-900 dark:text-white">
                   {selectedRequest.description}
                 </p>
@@ -182,25 +183,25 @@ export function MyRequests() {
 
             {selectedRequest.estimated_cost && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Estimated Cost</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Perkiraan Biaya</p>
                 <p className="text-xl font-bold text-gray-900 dark:text-white">
-                  ${selectedRequest.estimated_cost}
+                  {formatCurrency(selectedRequest.estimated_cost)}
                 </p>
               </div>
             )}
 
             {selectedRequest.final_cost && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Final Cost</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Biaya Akhir</p>
                 <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                  ${selectedRequest.final_cost}
+                  {formatCurrency(selectedRequest.final_cost)}
                 </p>
               </div>
             )}
 
             {selectedRequest.mechanic_notes && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Mechanic Notes</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Catatan Mekanik</p>
                 <p className="text-gray-900 dark:text-white">
                   {selectedRequest.mechanic_notes}
                 </p>
@@ -209,20 +210,20 @@ export function MyRequests() {
 
             {selectedRequest.history && selectedRequest.history.length > 0 && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Status History</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Riwayat Status</p>
                 <div className="space-y-2">
                   {selectedRequest.history.map((entry: any) => (
                     <div key={entry.id} className="flex items-start space-x-3 text-sm">
                       <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
                       <div>
                         <p className="text-gray-900 dark:text-white">
-                          Status changed to <span className="font-medium">{entry.status}</span>
+                          Status berubah menjadi <span className="font-medium">{formatStatus(entry.status)}</span>
                         </p>
                         {entry.notes && (
                           <p className="text-gray-600 dark:text-gray-400">{entry.notes}</p>
                         )}
                         <p className="text-gray-500 dark:text-gray-500 text-xs">
-                          {new Date(entry.created_at).toLocaleString()}
+                          {formatDateTime(entry.created_at)}
                         </p>
                       </div>
                     </div>

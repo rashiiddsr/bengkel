@@ -8,17 +8,17 @@ import { useAuth } from '../../contexts/AuthContext';
 import type { Vehicle } from '../../lib/database.types';
 
 const SERVICE_TYPES = [
-  'Engine Overhaul',
-  'Automatic Transmission Overhaul',
-  'Manual Transmission Overhaul',
-  'Suspension System',
-  'Wiring/Electrical',
-  'ECU Service',
-  'ABS System',
+  'Overhaul Mesin',
+  'Overhaul Transmisi Otomatis',
+  'Overhaul Transmisi Manual',
+  'Sistem Suspensi',
+  'Kelistrikan',
+  'Servis ECU',
+  'Sistem ABS',
   'Central Lock',
-  'Racing ECU Installation',
-  'Paint & Body Repair',
-  'Vehicle Inspection',
+  'Pemasangan ECU Racing',
+  'Perbaikan Cat & Bodi',
+  'Inspeksi Kendaraan',
 ];
 
 export function NewServiceRequest() {
@@ -93,7 +93,7 @@ export function NewServiceRequest() {
     if (!user) return;
 
     if (!formData.vehicleId) {
-      setError('Please select a vehicle');
+      setError('Silakan pilih kendaraan');
       return;
     }
 
@@ -120,7 +120,7 @@ export function NewServiceRequest() {
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        New Service Request
+        Permintaan Servis Baru
       </h1>
 
       {error && (
@@ -131,19 +131,19 @@ export function NewServiceRequest() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Service Request Details</CardTitle>
+          <CardTitle>Detail Permintaan Servis</CardTitle>
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Vehicle
+                Kendaraan
               </label>
               {!showNewVehicle ? (
                 <div className="space-y-2">
                   <Select
                     options={[
-                      { value: '', label: 'Select a vehicle' },
+                      { value: '', label: 'Pilih kendaraan' },
                       ...vehicles.map(v => ({
                         value: v.id,
                         label: `${v.make} ${v.model} (${v.license_plate})`,
@@ -158,36 +158,36 @@ export function NewServiceRequest() {
                     onClick={() => setShowNewVehicle(true)}
                     className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                   >
-                    + Add New Vehicle
+                    + Tambah Kendaraan Baru
                   </button>
                 </div>
               ) : (
                 <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div className="grid grid-cols-2 gap-4">
                     <Input
-                      label="Make"
+                      label="Merek"
                       value={newVehicle.make}
                       onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })}
-                      placeholder="e.g., Toyota"
+                      placeholder="contoh: Toyota"
                     />
                     <Input
                       label="Model"
                       value={newVehicle.model}
                       onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
-                      placeholder="e.g., Camry"
+                      placeholder="contoh: Avanza"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <Input
                       type="number"
-                      label="Year"
+                      label="Tahun"
                       value={newVehicle.year}
                       onChange={(e) => setNewVehicle({ ...newVehicle, year: parseInt(e.target.value) })}
                       min="1900"
                       max={new Date().getFullYear() + 1}
                     />
                     <Input
-                      label="License Plate"
+                      label="Nomor Polisi"
                       value={newVehicle.licensePlate}
                       onChange={(e) => setNewVehicle({ ...newVehicle, licensePlate: e.target.value })}
                       placeholder="ABC-1234"
@@ -199,7 +199,7 @@ export function NewServiceRequest() {
                       onClick={handleAddVehicle}
                       size="sm"
                     >
-                      Add Vehicle
+                      Tambah Kendaraan
                     </Button>
                     <Button
                       type="button"
@@ -207,7 +207,7 @@ export function NewServiceRequest() {
                       size="sm"
                       onClick={() => setShowNewVehicle(false)}
                     >
-                      Cancel
+                      Batal
                     </Button>
                   </div>
                 </div>
@@ -215,9 +215,9 @@ export function NewServiceRequest() {
             </div>
 
             <Select
-              label="Service Type"
+              label="Jenis Servis"
               options={[
-                { value: '', label: 'Select service type' },
+                { value: '', label: 'Pilih jenis servis' },
                 ...SERVICE_TYPES.map(type => ({ value: type, label: type })),
               ]}
               value={formData.serviceType}
@@ -226,8 +226,8 @@ export function NewServiceRequest() {
             />
 
             <TextArea
-              label="Description"
-              placeholder="Describe the issue or service needed..."
+              label="Deskripsi"
+              placeholder="Jelaskan keluhan atau servis yang dibutuhkan..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={5}
@@ -235,21 +235,21 @@ export function NewServiceRequest() {
 
             <Input
               type="date"
-              label="Preferred Service Date"
+              label="Tanggal Servis yang Diinginkan"
               value={formData.preferredDate}
               onChange={(e) => setFormData({ ...formData, preferredDate: e.target.value })}
             />
 
             <div className="flex space-x-4">
               <Button type="submit" disabled={loading}>
-                {loading ? 'Submitting...' : 'Submit Request'}
+                {loading ? 'Mengirim...' : 'Kirim Permintaan'}
               </Button>
               <Button
                 type="button"
                 variant="secondary"
                 onClick={() => navigate('/customer')}
               >
-                Cancel
+                Batal
               </Button>
             </div>
           </form>

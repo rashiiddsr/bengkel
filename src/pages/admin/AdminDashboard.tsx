@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FileText, Users, Wrench, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card, CardBody } from '../../components/ui/Card';
 import { api } from '../../lib/api';
+import { formatDate, formatStatus } from '../../lib/format';
 
 export function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -43,18 +44,18 @@ export function AdminDashboard() {
   };
 
   const statCards = [
-    { label: 'Pending Requests', value: stats.pendingRequests, icon: Clock, color: 'yellow' },
-    { label: 'In Progress', value: stats.inProgressRequests, icon: FileText, color: 'blue' },
-    { label: 'Completed', value: stats.completedRequests, icon: CheckCircle, color: 'green' },
-    { label: 'Total Requests', value: stats.totalRequests, icon: AlertCircle, color: 'gray' },
-    { label: 'Mechanics', value: stats.totalMechanics, icon: Wrench, color: 'blue' },
-    { label: 'Customers', value: stats.totalCustomers, icon: Users, color: 'blue' },
+    { label: 'Menunggu', value: stats.pendingRequests, icon: Clock, color: 'yellow' },
+    { label: 'Sedang Dikerjakan', value: stats.inProgressRequests, icon: FileText, color: 'blue' },
+    { label: 'Selesai', value: stats.completedRequests, icon: CheckCircle, color: 'green' },
+    { label: 'Total Permintaan', value: stats.totalRequests, icon: AlertCircle, color: 'gray' },
+    { label: 'Mekanik', value: stats.totalMechanics, icon: Wrench, color: 'blue' },
+    { label: 'Pelanggan', value: stats.totalCustomers, icon: Users, color: 'blue' },
   ];
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-        Admin Dashboard
+        Dasbor Admin
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -79,40 +80,40 @@ export function AdminDashboard() {
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Recent Service Requests
+              Permintaan Servis Terbaru
             </h3>
             <Link
               to="/admin/service-requests"
               className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
             >
-              View All
+              Lihat Semua
             </Link>
           </div>
         </div>
         <CardBody>
           {loading ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Loading...</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : recentRequests.length === 0 ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">No requests yet</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Belum ada permintaan</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Customer
+                      Pelanggan
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Service
+                      Servis
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Vehicle
+                      Kendaraan
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                       Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Date
+                      Tanggal
                     </th>
                   </tr>
                 </thead>
@@ -130,11 +131,11 @@ export function AdminDashboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                          {request.status.replace('_', ' ').toUpperCase()}
+                          {formatStatus(request.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(request.created_at).toLocaleDateString()}
+                        {formatDate(request.created_at)}
                       </td>
                     </tr>
                   ))}

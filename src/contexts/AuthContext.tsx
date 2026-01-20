@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profiles = await api.listProfiles({ id: userId });
       return profiles[0] ?? null;
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Gagal mengambil profil:', error);
       return null;
     }
   };
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(sessionData.user);
         setProfile(sessionData.profile);
       } catch (error) {
-        console.error('Error fetching session:', error);
+        console.error('Gagal mengambil sesi:', error);
         setUser(null);
         setProfile(null);
       } finally {
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth harus digunakan di dalam AuthProvider');
   }
   return context;
 }

@@ -23,7 +23,7 @@ export function Register() {
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Kata sandi tidak cocok');
       return;
     }
 
@@ -53,13 +53,13 @@ export function Register() {
             <div className="flex items-center space-x-2">
               <Wrench className="h-10 w-10 text-blue-600" />
               <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                AutoService
+                Bengkel AutoService
               </span>
             </div>
           </div>
 
           <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-8">
-            Create Your Account
+            Buat Akun Anda
           </h2>
 
           {error && (
@@ -71,8 +71,8 @@ export function Register() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="text"
-              label="Full Name"
-              placeholder="Enter your full name"
+              label="Nama Lengkap"
+              placeholder="Masukkan nama lengkap Anda"
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               required
@@ -81,7 +81,7 @@ export function Register() {
             <Input
               type="email"
               label="Email"
-              placeholder="Enter your email"
+              placeholder="Masukkan email Anda"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
@@ -89,8 +89,8 @@ export function Register() {
 
             <Input
               type="tel"
-              label="Phone"
-              placeholder="Enter your phone number"
+              label="Nomor Telepon"
+              placeholder="Masukkan nomor telepon Anda"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               required
@@ -98,8 +98,8 @@ export function Register() {
 
             <Input
               type="password"
-              label="Password"
-              placeholder="Create a password"
+              label="Kata Sandi"
+              placeholder="Buat kata sandi"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
@@ -107,8 +107,8 @@ export function Register() {
 
             <Input
               type="password"
-              label="Confirm Password"
-              placeholder="Confirm your password"
+              label="Konfirmasi Kata Sandi"
+              placeholder="Konfirmasi kata sandi"
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               required
@@ -119,17 +119,17 @@ export function Register() {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Creating account...' : 'Sign Up'}
+              {loading ? 'Membuat akun...' : 'Daftar'}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Already have an account?{' '}
+            Sudah punya akun?{' '}
             <Link
               to="/login"
               className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
             >
-              Sign in
+              Masuk
             </Link>
           </p>
         </div>

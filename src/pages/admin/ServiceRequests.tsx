@@ -7,6 +7,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ServiceRequest, Profile } from '../../lib/database.types';
 import { Edit } from 'lucide-react';
+import { formatCurrency, formatStatus } from '../../lib/format';
 
 interface RequestWithDetails extends ServiceRequest {
   customer?: Profile;
@@ -77,7 +78,7 @@ export function ServiceRequests() {
     await api.createStatusHistory({
         service_request_id: selectedRequest.id,
         status: editForm.status,
-        notes: `Updated by admin: ${editForm.adminNotes}`,
+        notes: `Diperbarui oleh admin: ${editForm.adminNotes}`,
         changed_by: user.id,
       });
 
@@ -105,17 +106,17 @@ export function ServiceRequests() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Service Requests Management
+        Kelola Permintaan Servis
       </h1>
 
       <div className="mb-4">
         <Select
           options={[
-            { value: 'all', label: 'All Requests' },
-            { value: 'pending', label: 'Pending' },
-            { value: 'approved', label: 'Approved' },
-            { value: 'in_progress', label: 'In Progress' },
-            { value: 'completed', label: 'Completed' },
+            { value: 'all', label: 'Semua Permintaan' },
+            { value: 'pending', label: 'Menunggu' },
+            { value: 'approved', label: 'Disetujui' },
+            { value: 'in_progress', label: 'Sedang Dikerjakan' },
+            { value: 'completed', label: 'Selesai' },
           ]}
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
@@ -125,34 +126,34 @@ export function ServiceRequests() {
       <Card>
         <CardBody>
           {loading ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Loading...</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : filteredRequests.length === 0 ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">No requests found</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Tidak ada permintaan</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Customer
+                      Pelanggan
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Service
+                      Servis
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Vehicle
+                      Kendaraan
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Mechanic
+                      Mekanik
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                       Status
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Cost
+                      Biaya
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Actions
+                      Aksi
                     </th>
                   </tr>
                 </thead>
@@ -169,15 +170,19 @@ export function ServiceRequests() {
                         {request.vehicle?.make} {request.vehicle?.model}
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        {request.mechanic?.full_name || 'Unassigned'}
+                        {request.mechanic?.full_name || 'Belum Ditugaskan'}
                       </td>
                       <td className="px-4 py-4">
                         <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(request.status)}`}>
-                          {request.status.replace('_', ' ').toUpperCase()}
+                          {formatStatus(request.status)}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
-                        {request.final_cost ? `$${request.final_cost}` : request.estimated_cost ? `~$${request.estimated_cost}` : '-'}
+                        {request.final_cost
+                          ? formatCurrency(request.final_cost)
+                          : request.estimated_cost
+                            ? `~${formatCurrency(request.estimated_cost)}`
+                            : '-'}
                       </td>
                       <td className="px-4 py-4">
                         <Button
@@ -200,20 +205,20 @@ export function ServiceRequests() {
       <Modal
         isOpen={!!selectedRequest}
         onClose={() => setSelectedRequest(null)}
-        title="Edit Service Request"
+        title="Edit Permintaan Servis"
         size="lg"
       >
         {selectedRequest && (
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Customer</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Pelanggan</p>
               <p className="font-medium text-gray-900 dark:text-white">
                 {selectedRequest.customer?.full_name}
               </p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Service Type</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Jenis Servis</p>
               <p className="font-medium text-gray-900 dark:text-white">
                 {selectedRequest.service_type}
               </p>
@@ -221,7 +226,7 @@ export function ServiceRequests() {
 
             {selectedRequest.description && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Description</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Deskripsi</p>
                 <p className="text-gray-900 dark:text-white">
                   {selectedRequest.description}
                 </p>
@@ -231,22 +236,22 @@ export function ServiceRequests() {
             <Select
               label="Status"
               options={[
-                { value: 'pending', label: 'Pending' },
-                { value: 'approved', label: 'Approved' },
-                { value: 'in_progress', label: 'In Progress' },
-                { value: 'parts_needed', label: 'Parts Needed' },
-                { value: 'quality_check', label: 'Quality Check' },
-                { value: 'completed', label: 'Completed' },
-                { value: 'rejected', label: 'Rejected' },
+                { value: 'pending', label: 'Menunggu' },
+                { value: 'approved', label: 'Disetujui' },
+                { value: 'in_progress', label: 'Sedang Dikerjakan' },
+                { value: 'parts_needed', label: 'Menunggu Suku Cadang' },
+                { value: 'quality_check', label: 'Pemeriksaan Kualitas' },
+                { value: 'completed', label: 'Selesai' },
+                { value: 'rejected', label: 'Ditolak' },
               ]}
               value={editForm.status}
               onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
             />
 
             <Select
-              label="Assign Mechanic"
+              label="Tugaskan Mekanik"
               options={[
-                { value: '', label: 'Unassigned' },
+                { value: '', label: 'Belum Ditugaskan' },
                 ...mechanics.map(m => ({ value: m.id, label: m.full_name })),
               ]}
               value={editForm.assignedMechanicId}
@@ -256,7 +261,7 @@ export function ServiceRequests() {
             <div className="grid grid-cols-2 gap-4">
               <Input
                 type="number"
-                label="Estimated Cost"
+                label="Perkiraan Biaya"
                 placeholder="0.00"
                 value={editForm.estimatedCost}
                 onChange={(e) => setEditForm({ ...editForm, estimatedCost: e.target.value })}
@@ -265,7 +270,7 @@ export function ServiceRequests() {
 
               <Input
                 type="number"
-                label="Final Cost"
+                label="Biaya Akhir"
                 placeholder="0.00"
                 value={editForm.finalCost}
                 onChange={(e) => setEditForm({ ...editForm, finalCost: e.target.value })}
@@ -274,17 +279,17 @@ export function ServiceRequests() {
             </div>
 
             <TextArea
-              label="Admin Notes"
-              placeholder="Add notes..."
+              label="Catatan Admin"
+              placeholder="Tambahkan catatan..."
               value={editForm.adminNotes}
               onChange={(e) => setEditForm({ ...editForm, adminNotes: e.target.value })}
               rows={3}
             />
 
             <div className="flex space-x-4 pt-4">
-              <Button onClick={handleUpdate}>Update Request</Button>
+              <Button onClick={handleUpdate}>Perbarui Permintaan</Button>
               <Button variant="secondary" onClick={() => setSelectedRequest(null)}>
-                Cancel
+                Batal
               </Button>
             </div>
           </div>

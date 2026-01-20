@@ -37,13 +37,13 @@ export function Login() {
             <div className="flex items-center space-x-2">
               <Wrench className="h-10 w-10 text-blue-600" />
               <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                AutoService
+                Bengkel AutoService
               </span>
             </div>
           </div>
 
           <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-8">
-            Sign In to Your Account
+            Masuk ke Akun Anda
           </h2>
 
           {error && (
@@ -56,7 +56,7 @@ export function Login() {
             <Input
               type="email"
               label="Email"
-              placeholder="Enter your email"
+              placeholder="Masukkan email Anda"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -64,8 +64,8 @@ export function Login() {
 
             <Input
               type="password"
-              label="Password"
-              placeholder="Enter your password"
+              label="Kata Sandi"
+              placeholder="Masukkan kata sandi Anda"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -76,17 +76,17 @@ export function Login() {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Sedang masuk...' : 'Masuk'}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?{' '}
+            Belum punya akun?{' '}
             <Link
               to="/register"
               className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
             >
-              Sign up
+              Daftar
             </Link>
           </p>
         </div>

@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Edit } from 'lucide-react';
+import { formatCurrency, formatStatus } from '../../lib/format';
 
 export function ServiceQueue() {
   const { user } = useAuth();
@@ -83,16 +84,16 @@ export function ServiceQueue() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Service Queue
+        Antrian Servis
       </h1>
 
       <Card>
         <CardBody>
           {loading ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Loading...</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : jobs.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              No active jobs in queue
+              Tidak ada pekerjaan aktif di antrian
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -100,22 +101,22 @@ export function ServiceQueue() {
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Service Type
+                      Jenis Servis
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Vehicle
+                      Kendaraan
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Customer
+                      Pelanggan
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                       Status
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Est. Cost
+                      Perkiraan Biaya
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Actions
+                      Aksi
                     </th>
                   </tr>
                 </thead>
@@ -137,11 +138,11 @@ export function ServiceQueue() {
                       </td>
                       <td className="px-4 py-4">
                         <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(job.status)}`}>
-                          {job.status.replace('_', ' ').toUpperCase()}
+                          {formatStatus(job.status)}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
-                        {job.estimated_cost ? `$${job.estimated_cost}` : '-'}
+                        {job.estimated_cost ? formatCurrency(job.estimated_cost) : '-'}
                       </td>
                       <td className="px-4 py-4">
                         <Button
@@ -164,20 +165,20 @@ export function ServiceQueue() {
       <Modal
         isOpen={!!selectedJob}
         onClose={() => setSelectedJob(null)}
-        title="Update Service Status"
+        title="Perbarui Status Servis"
         size="lg"
       >
         {selectedJob && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Service Type</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Jenis Servis</p>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {selectedJob.service_type}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Vehicle</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Kendaraan</p>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {selectedJob.vehicle?.make} {selectedJob.vehicle?.model}
                 </p>
@@ -186,7 +187,7 @@ export function ServiceQueue() {
 
             {selectedJob.description && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Customer Description</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Keluhan Pelanggan</p>
                 <p className="text-gray-900 dark:text-white">
                   {selectedJob.description}
                 </p>
@@ -195,7 +196,7 @@ export function ServiceQueue() {
 
             {selectedJob.admin_notes && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Admin Notes</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Catatan Admin</p>
                 <p className="text-gray-900 dark:text-white">
                   {selectedJob.admin_notes}
                 </p>
@@ -205,11 +206,11 @@ export function ServiceQueue() {
             <Select
               label="Status"
               options={[
-                { value: 'approved', label: 'Approved (Not Started)' },
-                { value: 'in_progress', label: 'In Progress' },
-                { value: 'parts_needed', label: 'Parts Needed' },
-                { value: 'quality_check', label: 'Quality Check' },
-                { value: 'completed', label: 'Completed' },
+                { value: 'approved', label: 'Disetujui (Belum Mulai)' },
+                { value: 'in_progress', label: 'Sedang Dikerjakan' },
+                { value: 'parts_needed', label: 'Menunggu Suku Cadang' },
+                { value: 'quality_check', label: 'Pemeriksaan Kualitas' },
+                { value: 'completed', label: 'Selesai' },
               ]}
               value={editForm.status}
               onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
@@ -217,25 +218,25 @@ export function ServiceQueue() {
 
             <Input
               type="number"
-              label="Final Cost"
-              placeholder="Enter final cost"
+              label="Biaya Akhir"
+              placeholder="Masukkan biaya akhir"
               value={editForm.finalCost}
               onChange={(e) => setEditForm({ ...editForm, finalCost: e.target.value })}
               step="0.01"
             />
 
             <TextArea
-              label="Mechanic Notes"
-              placeholder="Add notes about the service..."
+              label="Catatan Mekanik"
+              placeholder="Tambahkan catatan servis..."
               value={editForm.mechanicNotes}
               onChange={(e) => setEditForm({ ...editForm, mechanicNotes: e.target.value })}
               rows={4}
             />
 
             <div className="flex space-x-4 pt-4">
-              <Button onClick={handleUpdate}>Update Status</Button>
+              <Button onClick={handleUpdate}>Perbarui Status</Button>
               <Button variant="secondary" onClick={() => setSelectedJob(null)}>
-                Cancel
+                Batal
               </Button>
             </div>
           </div>
