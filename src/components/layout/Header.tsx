@@ -1,13 +1,14 @@
-import { Menu, Bell, ChevronDown } from 'lucide-react';
+import { Menu, Bell, ChevronDown, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
+  isSidebarOpen: boolean;
   onMenuClick: () => void;
 }
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ isSidebarOpen, onMenuClick }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const { user, profile, signOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -43,10 +44,10 @@ export function Header({ onMenuClick }: HeaderProps) {
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 lg:px-6">
       <button
         onClick={onMenuClick}
-        aria-label="Toggle sidebar"
+        aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
         className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
       >
-        <Menu className="h-6 w-6" />
+        {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
 
       <div className="flex-1"></div>
