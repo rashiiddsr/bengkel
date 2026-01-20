@@ -49,7 +49,7 @@ A comprehensive web-based automotive service management system built with React,
 
 - **Frontend**: React 18 with TypeScript
 - **Styling**: Tailwind CSS with AdminLTE-inspired design
-- **Backend**: Custom API with MySQL
+- **Backend**: Express API with MySQL
 - **Authentication**: API-driven auth
 - **Routing**: React Router v6
 - **State Management**: React Context API
@@ -63,7 +63,7 @@ A comprehensive web-based automotive service management system built with React,
 
 ### Installation
 
-1. Clone the repository and install dependencies:
+1. Clone the repository and install frontend dependencies:
 ```bash
 npm install
 ```
@@ -73,17 +73,29 @@ npm install
 echo "VITE_API_BASE_URL=http://localhost:3000" > .env
 ```
 
-3. Import the MySQL schema:
+3. Set up the API service:
+```bash
+cd api
+npm install
+cp .env.example .env
+```
+
+4. Import the MySQL schema:
 ```bash
 mysql -u root -p < database/schema.sql
 ```
 
-4. Start the development server:
+5. Start the API server:
 ```bash
 npm run dev
 ```
 
-5. Build for production:
+6. Start the frontend development server (from the repo root):
+```bash
+npm run dev
+```
+
+7. Build for production:
 ```bash
 npm run build
 ```
@@ -156,7 +168,11 @@ src/
 database/
 ├── schema.sql           # MySQL schema & seed data
 api/
-└── .env                 # API environment variables
+├── .env.example         # API environment variables template
+├── package.json         # API dependencies
+└── src/
+    ├── db.js            # MySQL connection pool
+    └── index.js         # Express API entrypoint
 ├── pages/
 │   ├── admin/          # Admin module pages
 │   ├── customer/       # Customer module pages
