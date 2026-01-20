@@ -3,7 +3,7 @@ import { Card, CardBody } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Input, Select, TextArea } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ServiceRequest, Profile } from '../../lib/database.types';
 import { Edit } from 'lucide-react';
@@ -36,20 +36,12 @@ export function ServiceRequests() {
 
   const fetchData = async () => {
     const [requestsRes, mechanicsRes] = await Promise.all([
-      supabase
-        .from('service_requests')
-        .select(`
-          *,
-          customer:profiles!service_requests_customer_id_fkey(*),
-          mechanic:profiles!service_requests_assigned_mechanic_id_fkey(*),
-          vehicle:vehicles(*)
-        `)
-        .order('created_at', { ascending: false }),
-      supabase.from('profiles').select('*').eq('role', 'mechanic'),
+      api.listServiceRequests({ include: 'customer,mechanic,vehicle', order: 'created_at.desc' }),
+      api.listProfiles({ role: 'mechanic', order: 'full_name.asc' }),
     ]);
 
-    if (requestsRes.data) setRequests(requestsRes.data as RequestWithDetails[]);
-    if (mechanicsRes.data) setMechanics(mechanicsRes.data);
+    if (requestsRes) setRequests(requestsRes as RequestWithDetails[]);
+    if (mechanicsRes) setMechanics(mechanicsRes);
     setLoading(false);
   };
 
@@ -81,22 +73,16 @@ export function ServiceRequests() {
       updates.final_cost = parseFloat(editForm.finalCost);
     }
 
-    const { error } = await supabase
-      .from('service_requests')
-      .update(updates)
-      .eq('id', selectedRequest.id);
-
-    if (!error) {
-      await supabase.from('status_history').insert({
+    await api.updateServiceRequest(selectedRequest.id, updates);
+    await api.createStatusHistory({
         service_request_id: selectedRequest.id,
         status: editForm.status,
         notes: `Updated by admin: ${editForm.adminNotes}`,
         changed_by: user.id,
       });
 
-      setSelectedRequest(null);
-      fetchData();
-    }
+    setSelectedRequest(null);
+    fetchData();
   };
 
   const getStatusColor = (status: string) => {

@@ -13,7 +13,7 @@ export type Database = {
         Row: {
           id: string
           full_name: string
-          role: 'admin' | 'mechanic' | 'customer'
+          role: 'superadmin' | 'admin' | 'mechanic' | 'customer'
           phone: string | null
           address: string | null
           created_at: string
@@ -22,7 +22,7 @@ export type Database = {
         Insert: {
           id: string
           full_name: string
-          role: 'admin' | 'mechanic' | 'customer'
+          role: 'superadmin' | 'admin' | 'mechanic' | 'customer'
           phone?: string | null
           address?: string | null
           created_at?: string
@@ -31,7 +31,7 @@ export type Database = {
         Update: {
           id?: string
           full_name?: string
-          role?: 'admin' | 'mechanic' | 'customer'
+          role?: 'superadmin' | 'admin' | 'mechanic' | 'customer'
           phone?: string | null
           address?: string | null
           created_at?: string

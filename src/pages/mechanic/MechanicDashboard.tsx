@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Clock, CheckCircle } from 'lucide-react';
 import { Card, CardBody } from '../../components/ui/Card';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-import type { ServiceRequest } from '../../lib/database.types';
 
 export function MechanicDashboard() {
   const { user } = useAuth();
@@ -23,20 +22,18 @@ export function MechanicDashboard() {
   const fetchData = async () => {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('service_requests')
-      .select('*, vehicle:vehicles(*), customer:profiles!service_requests_customer_id_fkey(*)')
-      .eq('assigned_mechanic_id', user.id)
-      .order('created_at', { ascending: false });
+    const data = await api.listServiceRequests({
+      assigned_mechanic_id: user.id,
+      include: 'vehicle,customer',
+      order: 'created_at.desc',
+    });
 
-    if (data) {
-      setStats({
-        total: data.length,
-        inProgress: data.filter(r => ['approved', 'in_progress', 'parts_needed', 'quality_check'].includes(r.status)).length,
-        completed: data.filter(r => r.status === 'completed').length,
-      });
-      setRecentJobs(data.slice(0, 5));
-    }
+    setStats({
+      total: data.length,
+      inProgress: data.filter(r => ['approved', 'in_progress', 'parts_needed', 'quality_check'].includes(r.status)).length,
+      completed: data.filter(r => r.status === 'completed').length,
+    });
+    setRecentJobs(data.slice(0, 5));
 
     setLoading(false);
   };

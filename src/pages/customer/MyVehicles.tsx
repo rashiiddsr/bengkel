@@ -3,7 +3,7 @@ import { Card, CardHeader, CardBody, CardTitle } from '../../components/ui/Card'
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Vehicle } from '../../lib/database.types';
 import { Plus, Car } from 'lucide-react';
@@ -27,15 +27,12 @@ export function MyVehicles() {
   const fetchVehicles = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('vehicles')
-      .select('*')
-      .eq('customer_id', user.id)
-      .order('created_at', { ascending: false });
+    const data = await api.listVehicles({
+      customer_id: user.id,
+      order: 'created_at.desc',
+    });
 
-    if (!error && data) {
-      setVehicles(data);
-    }
+    setVehicles(data);
     setLoading(false);
   };
 
@@ -43,26 +40,22 @@ export function MyVehicles() {
     e.preventDefault();
     if (!user) return;
 
-    const { error } = await supabase
-      .from('vehicles')
-      .insert({
-        customer_id: user.id,
-        make: formData.make,
-        model: formData.model,
-        year: formData.year,
-        license_plate: formData.licensePlate,
-      });
+    await api.createVehicle({
+      customer_id: user.id,
+      make: formData.make,
+      model: formData.model,
+      year: formData.year,
+      license_plate: formData.licensePlate,
+    });
 
-    if (!error) {
-      setShowModal(false);
-      setFormData({
-        make: '',
-        model: '',
-        year: new Date().getFullYear(),
-        licensePlate: '',
-      });
-      fetchVehicles();
-    }
+    setShowModal(false);
+    setFormData({
+      make: '',
+      model: '',
+      year: new Date().getFullYear(),
+      licensePlate: '',
+    });
+    fetchVehicles();
   };
 
   return (

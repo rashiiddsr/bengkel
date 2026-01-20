@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/ui/Card';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import type { Vehicle, Profile } from '../../lib/database.types';
 import { Car } from 'lucide-react';
 
@@ -17,10 +17,7 @@ export function Vehicles() {
   }, []);
 
   const fetchVehicles = async () => {
-    const { data } = await supabase
-      .from('vehicles')
-      .select('*, customer:profiles!vehicles_customer_id_fkey(*)')
-      .order('created_at', { ascending: false });
+    const data = await api.listVehicles({ include: 'customer', order: 'created_at.desc' });
 
     if (data) {
       setVehicles(data as VehicleWithCustomer[]);
