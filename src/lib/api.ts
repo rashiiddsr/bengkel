@@ -24,7 +24,7 @@ const apiFetch = async <T>(path: string, options: RequestInit = {}) => {
 
   if (!response.ok) {
     const message = await response.text();
-    throw new Error(message || 'Request failed');
+    throw new Error(message || 'Permintaan gagal');
   }
 
   if (response.status === 204) {

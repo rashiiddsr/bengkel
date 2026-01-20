@@ -76,13 +76,16 @@ CREATE TABLE service_photos (
 
 SET @superadmin_id = UUID();
 SET @admin_id = UUID();
+SET @mechanic_id = UUID();
 
 INSERT INTO users (id, email, password_hash, role)
 VALUES
   (@superadmin_id, 'superadmin@gmail.com', SHA2('superadmin', 256), 'superadmin'),
-  (@admin_id, 'admin@gmail.com', SHA2('admin', 256), 'admin');
+  (@admin_id, 'admin@gmail.com', SHA2('admin', 256), 'admin'),
+  (@mechanic_id, 'mechanik@gmail.com', SHA2('mekanik', 256), 'mechanic');
 
 INSERT INTO profiles (id, full_name, role)
 VALUES
-  (@superadmin_id, 'Super Admin', 'superadmin'),
-  (@admin_id, 'Admin', 'admin');
+  (@superadmin_id, 'Superadmin', 'superadmin'),
+  (@admin_id, 'Admin', 'admin'),
+  (@mechanic_id, 'Mekanik Default', 'mechanic');

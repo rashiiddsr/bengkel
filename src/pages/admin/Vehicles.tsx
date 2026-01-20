@@ -3,6 +3,7 @@ import { Card, CardBody } from '../../components/ui/Card';
 import { api } from '../../lib/api';
 import type { Vehicle, Profile } from '../../lib/database.types';
 import { Car } from 'lucide-react';
+import { formatDate } from '../../lib/format';
 
 interface VehicleWithCustomer extends Vehicle {
   customer?: Profile;
@@ -28,34 +29,34 @@ export function Vehicles() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Vehicles Management
+        Kelola Kendaraan
       </h1>
 
       <Card>
         <CardBody>
           {loading ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Loading...</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : vehicles.length === 0 ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">No vehicles found</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Tidak ada kendaraan</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Vehicle
+                      Kendaraan
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Year
+                      Tahun
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      License Plate
+                      Nomor Polisi
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Owner
+                      Pemilik
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Added Date
+                      Tanggal Input
                     </th>
                   </tr>
                 </thead>
@@ -83,10 +84,10 @@ export function Vehicles() {
                         {vehicle.license_plate}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {vehicle.customer?.full_name || 'Unknown'}
+                        {vehicle.customer?.full_name || 'Tidak diketahui'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(vehicle.created_at).toLocaleDateString()}
+                        {formatDate(vehicle.created_at)}
                       </td>
                     </tr>
                   ))}

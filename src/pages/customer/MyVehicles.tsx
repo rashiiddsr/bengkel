@@ -62,28 +62,28 @@ export function MyVehicles() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          My Vehicles
+          Kendaraan Saya
         </h1>
         <Button onClick={() => setShowModal(true)}>
           <Plus className="h-5 w-5 mr-2" />
-          Add Vehicle
+          Tambah Kendaraan
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
           <p className="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
-            Loading...
+            Memuat...
           </p>
         ) : vehicles.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <Car className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400 mb-4">
-              No vehicles added yet
+              Belum ada kendaraan yang ditambahkan
             </p>
             <Button onClick={() => setShowModal(true)}>
               <Plus className="h-5 w-5 mr-2" />
-              Add Your First Vehicle
+              Tambahkan Kendaraan Pertama
             </Button>
           </div>
         ) : (
@@ -99,10 +99,10 @@ export function MyVehicles() {
                       {vehicle.make} {vehicle.model}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Year: {vehicle.year}
+                      Tahun: {vehicle.year}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      License: {vehicle.license_plate}
+                      Plat: {vehicle.license_plate}
                     </p>
                   </div>
                 </div>
@@ -115,26 +115,26 @@ export function MyVehicles() {
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        title="Add New Vehicle"
+        title="Tambah Kendaraan Baru"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
-            label="Make"
-            placeholder="e.g., Toyota"
+            label="Merek"
+            placeholder="contoh: Toyota"
             value={formData.make}
             onChange={(e) => setFormData({ ...formData, make: e.target.value })}
             required
           />
           <Input
             label="Model"
-            placeholder="e.g., Camry"
+            placeholder="contoh: Avanza"
             value={formData.model}
             onChange={(e) => setFormData({ ...formData, model: e.target.value })}
             required
           />
           <Input
             type="number"
-            label="Year"
+            label="Tahun"
             value={formData.year}
             onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
             min="1900"
@@ -142,20 +142,20 @@ export function MyVehicles() {
             required
           />
           <Input
-            label="License Plate"
+            label="Nomor Polisi"
             placeholder="ABC-1234"
             value={formData.licensePlate}
             onChange={(e) => setFormData({ ...formData, licensePlate: e.target.value })}
             required
           />
           <div className="flex space-x-4 pt-4">
-            <Button type="submit">Add Vehicle</Button>
+            <Button type="submit">Tambah Kendaraan</Button>
             <Button
               type="button"
               variant="secondary"
               onClick={() => setShowModal(false)}
             >
-              Cancel
+              Batal
             </Button>
           </div>
         </form>

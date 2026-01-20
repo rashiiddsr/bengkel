@@ -40,34 +40,34 @@ export function Customers() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Customers Management
+        Kelola Pelanggan
       </h1>
 
       <Card>
         <CardBody>
           {loading ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Loading...</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : customers.length === 0 ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">No customers found</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Tidak ada pelanggan</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Name
+                      Nama
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Phone
+                      Telepon
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Address
+                      Alamat
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Vehicles
+                      Kendaraan
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Total Requests
+                      Total Permintaan
                     </th>
                   </tr>
                 </thead>

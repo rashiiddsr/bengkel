@@ -26,29 +26,35 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const getMenuItems = () => {
     if (profile?.role === 'admin') {
       return [
-        { to: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/admin/service-requests', icon: FileText, label: 'Service Requests' },
-        { to: '/admin/mechanics', icon: Wrench, label: 'Mechanics' },
-        { to: '/admin/customers', icon: Users, label: 'Customers' },
-        { to: '/admin/vehicles', icon: Car, label: 'Vehicles' },
+        { to: '/admin', icon: LayoutDashboard, label: 'Dasbor' },
+        { to: '/admin/service-requests', icon: FileText, label: 'Permintaan Servis' },
+        { to: '/admin/mechanics', icon: Wrench, label: 'Mekanik' },
+        { to: '/admin/customers', icon: Users, label: 'Pelanggan' },
+        { to: '/admin/vehicles', icon: Car, label: 'Kendaraan' },
       ];
     } else if (profile?.role === 'mechanic') {
       return [
-        { to: '/mechanic', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/mechanic/queue', icon: FileText, label: 'Service Queue' },
-        { to: '/mechanic/completed', icon: FileText, label: 'Completed' },
+        { to: '/mechanic', icon: LayoutDashboard, label: 'Dasbor' },
+        { to: '/mechanic/queue', icon: FileText, label: 'Antrian Servis' },
+        { to: '/mechanic/completed', icon: FileText, label: 'Pekerjaan Selesai' },
       ];
     } else {
       return [
-        { to: '/customer', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/customer/new-request', icon: FileText, label: 'New Service Request' },
-        { to: '/customer/my-requests', icon: FileText, label: 'My Requests' },
-        { to: '/customer/vehicles', icon: Car, label: 'My Vehicles' },
+        { to: '/customer', icon: LayoutDashboard, label: 'Dasbor' },
+        { to: '/customer/new-request', icon: FileText, label: 'Permintaan Servis Baru' },
+        { to: '/customer/my-requests', icon: FileText, label: 'Permintaan Saya' },
+        { to: '/customer/vehicles', icon: Car, label: 'Kendaraan Saya' },
       ];
     }
   };
 
   const menuItems = getMenuItems();
+  const roleLabels: Record<string, string> = {
+    admin: 'Admin',
+    mechanic: 'Mekanik',
+    customer: 'Pelanggan',
+    superadmin: 'Superadmin',
+  };
 
   return (
     <>
@@ -71,7 +77,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex items-center justify-between p-4 border-b border-gray-800">
             <div className="flex items-center space-x-2">
               <Wrench className="h-8 w-8 text-blue-500" />
-              <span className="text-xl font-bold text-white">AutoService</span>
+              <span className="text-xl font-bold text-white">Bengkel AutoService</span>
             </div>
             <button
               onClick={onClose}
@@ -106,14 +112,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="border-t border-gray-800 p-4">
             <div className="mb-3 px-4">
               <p className="text-sm font-medium text-white">{profile?.full_name}</p>
-              <p className="text-xs text-gray-400 capitalize">{profile?.role}</p>
+              <p className="text-xs text-gray-400 capitalize">
+                {profile?.role ? roleLabels[profile.role] ?? profile.role : ''}
+              </p>
             </div>
             <button
               onClick={handleSignOut}
               className="flex items-center space-x-3 px-4 py-3 w-full text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
             >
               <LogOut className="h-5 w-5" />
-              <span>Sign Out</span>
+              <span>Keluar</span>
             </button>
           </div>
         </div>

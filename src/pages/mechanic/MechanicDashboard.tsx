@@ -4,6 +4,7 @@ import { FileText, Clock, CheckCircle } from 'lucide-react';
 import { Card, CardBody } from '../../components/ui/Card';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { formatStatus } from '../../lib/format';
 
 export function MechanicDashboard() {
   const { user } = useAuth();
@@ -41,7 +42,7 @@ export function MechanicDashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-        Mechanic Dashboard
+        Dasbor Mekanik
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -49,7 +50,7 @@ export function MechanicDashboard() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Jobs</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Pekerjaan</p>
                 <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                   {stats.total}
                 </p>
@@ -63,7 +64,7 @@ export function MechanicDashboard() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">In Progress</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Sedang Dikerjakan</p>
                 <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
                   {stats.inProgress}
                 </p>
@@ -77,7 +78,7 @@ export function MechanicDashboard() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Selesai</p>
                 <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                   {stats.completed}
                 </p>
@@ -92,22 +93,22 @@ export function MechanicDashboard() {
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Recent Jobs
+              Pekerjaan Terbaru
             </h3>
             <Link
               to="/mechanic/queue"
               className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
             >
-              View All
+              Lihat Semua
             </Link>
           </div>
         </div>
         <CardBody>
           {loading ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Loading...</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : recentJobs.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              No jobs assigned yet
+              Belum ada pekerjaan yang ditugaskan
             </p>
           ) : (
             <div className="space-y-4">
@@ -132,7 +133,7 @@ export function MechanicDashboard() {
                       ${job.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ''}
                     `}
                   >
-                    {job.status.replace('_', ' ').toUpperCase()}
+                    {formatStatus(job.status)}
                   </span>
                 </div>
               ))}

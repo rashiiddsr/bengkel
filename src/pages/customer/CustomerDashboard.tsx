@@ -4,6 +4,7 @@ import { FileText, Car, Clock, CheckCircle, Plus } from 'lucide-react';
 import { Card, CardHeader, CardBody, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { api } from '../../lib/api';
+import { formatDate, formatStatus } from '../../lib/format';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ServiceRequest } from '../../lib/database.types';
 
@@ -37,12 +38,12 @@ export function CustomerDashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Dashboard
+          Dasbor
         </h1>
         <Link to="/customer/new-request">
           <Button>
             <Plus className="h-5 w-5 mr-2" />
-            New Service Request
+            Permintaan Servis Baru
           </Button>
         </Link>
       </div>
@@ -52,7 +53,7 @@ export function CustomerDashboard() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Menunggu</p>
                 <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
                   {pendingCount}
                 </p>
@@ -66,7 +67,7 @@ export function CustomerDashboard() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">In Progress</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Sedang Dikerjakan</p>
                 <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                   {inProgressCount}
                 </p>
@@ -80,7 +81,7 @@ export function CustomerDashboard() {
           <CardBody>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Selesai</p>
                 <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                   {completedCount}
                 </p>
@@ -94,10 +95,10 @@ export function CustomerDashboard() {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Recent Service Requests</CardTitle>
+            <CardTitle>Permintaan Servis Terbaru</CardTitle>
             <Link to="/customer/my-requests">
               <Button variant="secondary" size="sm">
-                View All
+                Lihat Semua
               </Button>
             </Link>
           </div>
@@ -105,16 +106,16 @@ export function CustomerDashboard() {
         <CardBody>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              Loading...
+              Memuat...
             </p>
           ) : requests.length === 0 ? (
             <div className="text-center py-8">
               <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 dark:text-gray-400 mb-4">
-                No service requests yet
+                Belum ada permintaan servis
               </p>
               <Link to="/customer/new-request">
-                <Button>Create Your First Request</Button>
+                <Button>Buat Permintaan Pertama</Button>
               </Link>
             </div>
           ) : (
@@ -129,7 +130,7 @@ export function CustomerDashboard() {
                       {request.service_type}
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {new Date(request.created_at).toLocaleDateString()}
+                      {formatDate(request.created_at)}
                     </p>
                   </div>
                   <span
@@ -142,7 +143,7 @@ export function CustomerDashboard() {
                       ${request.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : ''}
                     `}
                   >
-                    {request.status.replace('_', ' ').toUpperCase()}
+                    {formatStatus(request.status)}
                   </span>
                 </div>
               ))}

@@ -20,7 +20,7 @@ app.use(
         callback(null, true);
         return;
       }
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error("Tidak diizinkan oleh CORS"));
     },
     credentials: true,
   })
@@ -106,7 +106,7 @@ app.get("/auth/session", async (req, res) => {
 app.post("/auth/login", async (req, res) => {
   const { email, password } = req.body ?? {};
   if (!email || !password) {
-    return res.status(400).json({ message: "email and password are required" });
+      return res.status(400).json({ message: "email dan password wajib diisi" });
   }
 
   try {
@@ -117,7 +117,7 @@ app.post("/auth/login", async (req, res) => {
     );
     const user = rows[0];
     if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Kredensial tidak valid" });
     }
 
     const [profileRows] = await pool.query("SELECT * FROM profiles WHERE id = ?", [user.id]);
@@ -134,7 +134,7 @@ app.post("/auth/login", async (req, res) => {
 app.post("/auth/register", async (req, res) => {
   const { email, password, full_name, phone } = req.body ?? {};
   if (!email || !password || !full_name) {
-    return res.status(400).json({ message: "email, password, and full_name are required" });
+    return res.status(400).json({ message: "email, password, dan full_name wajib diisi" });
   }
 
   const userId = crypto.randomUUID();
@@ -159,7 +159,7 @@ app.post("/auth/register", async (req, res) => {
     res.status(201).json({ user, profile });
   } catch (error) {
     if (error?.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ message: "Email already registered" });
+      return res.status(409).json({ message: "Email sudah terdaftar" });
     }
     res.status(500).json({ message: error.message });
   }
@@ -251,7 +251,9 @@ app.get("/vehicles", async (req, res) => {
 app.post("/vehicles", async (req, res) => {
   const { customer_id, make, model, year, license_plate } = req.body ?? {};
   if (!customer_id || !make || !model || !year || !license_plate) {
-    return res.status(400).json({ message: "customer_id, make, model, year, and license_plate are required" });
+    return res
+      .status(400)
+      .json({ message: "customer_id, make, model, year, dan license_plate wajib diisi" });
   }
   try {
     const pool = getPool();
@@ -272,7 +274,7 @@ app.patch("/vehicles/:vehicleId", async (req, res) => {
   const allowed = ["make", "model", "year", "license_plate"];
   const fields = Object.keys(updates).filter((field) => allowed.includes(field));
   if (fields.length === 0) {
-    return res.status(400).json({ message: "No valid fields to update" });
+    return res.status(400).json({ message: "Tidak ada field yang valid untuk diperbarui" });
   }
 
   try {
@@ -351,7 +353,9 @@ app.post("/service-requests", async (req, res) => {
   const { customer_id, vehicle_id, service_type, description, preferred_date, status } = req.body ?? {};
 
   if (!customer_id || !vehicle_id || !service_type) {
-    return res.status(400).json({ message: "customer_id, vehicle_id, and service_type are required" });
+    return res
+      .status(400)
+      .json({ message: "customer_id, vehicle_id, dan service_type wajib diisi" });
   }
 
   try {
@@ -393,7 +397,7 @@ app.patch("/service-requests/:requestId", async (req, res) => {
   ];
   const fields = Object.keys(updates).filter((field) => allowed.includes(field));
   if (fields.length === 0) {
-    return res.status(400).json({ message: "No valid fields to update" });
+    return res.status(400).json({ message: "Tidak ada field yang valid untuk diperbarui" });
   }
 
   try {
@@ -430,7 +434,9 @@ app.get("/status-history", async (req, res) => {
 app.post("/status-history", async (req, res) => {
   const { service_request_id, status, notes, changed_by } = req.body ?? {};
   if (!service_request_id || !status || !changed_by) {
-    return res.status(400).json({ message: "service_request_id, status, and changed_by are required" });
+    return res
+      .status(400)
+      .json({ message: "service_request_id, status, dan changed_by wajib diisi" });
   }
   try {
     const pool = getPool();
@@ -447,5 +453,5 @@ app.post("/status-history", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
+  console.log(`API berjalan di http://localhost:${port}`);
 });

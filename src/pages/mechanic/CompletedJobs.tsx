@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye } from 'lucide-react';
+import { formatCurrency, formatDate, formatDateTime } from '../../lib/format';
 
 export function CompletedJobs() {
   const { user } = useAuth();
@@ -37,16 +38,16 @@ export function CompletedJobs() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Completed Jobs
+        Pekerjaan Selesai
       </h1>
 
       <Card>
         <CardBody>
           {loading ? (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Loading...</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : jobs.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              No completed jobs yet
+              Belum ada pekerjaan selesai
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -54,22 +55,22 @@ export function CompletedJobs() {
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Service Type
+                      Jenis Servis
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Vehicle
+                      Kendaraan
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Customer
+                      Pelanggan
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Final Cost
+                      Biaya Akhir
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Completed Date
+                      Tanggal Selesai
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Actions
+                      Aksi
                     </th>
                   </tr>
                 </thead>
@@ -86,10 +87,10 @@ export function CompletedJobs() {
                         {job.customer?.full_name}
                       </td>
                       <td className="px-4 py-4 text-sm font-medium text-green-600 dark:text-green-400">
-                        {job.final_cost ? `$${job.final_cost}` : '-'}
+                        {job.final_cost ? formatCurrency(job.final_cost) : '-'}
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(job.updated_at).toLocaleDateString()}
+                        {formatDate(job.updated_at)}
                       </td>
                       <td className="px-4 py-4">
                         <Button
@@ -112,14 +113,14 @@ export function CompletedJobs() {
       <Modal
         isOpen={!!selectedJob}
         onClose={() => setSelectedJob(null)}
-        title="Job Details"
+        title="Detail Pekerjaan"
         size="lg"
       >
         {selectedJob && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Service Type</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Jenis Servis</p>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {selectedJob.service_type}
                 </p>
@@ -127,17 +128,17 @@ export function CompletedJobs() {
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
                 <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                  COMPLETED
+                  SELESAI
                 </span>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Vehicle</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Kendaraan</p>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {selectedJob.vehicle?.make} {selectedJob.vehicle?.model} ({selectedJob.vehicle?.license_plate})
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Customer</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Pelanggan</p>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {selectedJob.customer?.full_name}
                 </p>
@@ -146,7 +147,7 @@ export function CompletedJobs() {
 
             {selectedJob.description && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Initial Description</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Deskripsi Awal</p>
                 <p className="text-gray-900 dark:text-white">
                   {selectedJob.description}
                 </p>
@@ -155,7 +156,7 @@ export function CompletedJobs() {
 
             {selectedJob.mechanic_notes && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Work Notes</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Catatan Pekerjaan</p>
                 <p className="text-gray-900 dark:text-white">
                   {selectedJob.mechanic_notes}
                 </p>
@@ -165,26 +166,26 @@ export function CompletedJobs() {
             <div className="grid grid-cols-2 gap-4">
               {selectedJob.estimated_cost && (
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Estimated Cost</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Perkiraan Biaya</p>
                   <p className="text-xl font-bold text-gray-900 dark:text-white">
-                    ${selectedJob.estimated_cost}
+                    {formatCurrency(selectedJob.estimated_cost)}
                   </p>
                 </div>
               )}
               {selectedJob.final_cost && (
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Final Cost</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Biaya Akhir</p>
                   <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                    ${selectedJob.final_cost}
+                    {formatCurrency(selectedJob.final_cost)}
                   </p>
                 </div>
               )}
             </div>
 
             <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Completed Date</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Tanggal Selesai</p>
               <p className="font-medium text-gray-900 dark:text-white">
-                {new Date(selectedJob.updated_at).toLocaleString()}
+                {formatDateTime(selectedJob.updated_at)}
               </p>
             </div>
           </div>

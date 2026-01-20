@@ -38,16 +38,16 @@ export function Mechanics() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Mechanics Management
+        Kelola Mekanik
       </h1>
 
       {loading ? (
-        <p className="text-center text-gray-500 dark:text-gray-400 py-8">Loading...</p>
+        <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
       ) : mechanics.length === 0 ? (
         <Card>
           <CardBody>
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              No mechanics found
+              Tidak ada mekanik
             </p>
           </CardBody>
         </Card>
@@ -65,23 +65,23 @@ export function Mechanics() {
                       {mechanic.full_name}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {mechanic.phone || 'No phone'}
+                      {mechanic.phone || 'Tidak ada nomor'}
                     </p>
                     <div className="mt-3 space-y-1">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Total Jobs:</span>
+                        <span className="text-gray-600 dark:text-gray-400">Total Pekerjaan:</span>
                         <span className="font-medium text-gray-900 dark:text-white">
                           {mechanicStats[mechanic.id]?.total || 0}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">In Progress:</span>
+                        <span className="text-gray-600 dark:text-gray-400">Sedang Dikerjakan:</span>
                         <span className="font-medium text-blue-600 dark:text-blue-400">
                           {mechanicStats[mechanic.id]?.inProgress || 0}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Completed:</span>
+                        <span className="text-gray-600 dark:text-gray-400">Selesai:</span>
                         <span className="font-medium text-green-600 dark:text-green-400">
                           {mechanicStats[mechanic.id]?.completed || 0}
                         </span>
