@@ -53,7 +53,7 @@ export function Register() {
             <div className="flex items-center space-x-2">
               <Wrench className="h-10 w-10 text-blue-600" />
               <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                Bengkel AutoService
+                Bintang Motor Auto Service
               </span>
             </div>
           </div>
