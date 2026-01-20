@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
+import { Home } from './pages/Home';
 
 import { CustomerDashboard } from './pages/customer/CustomerDashboard';
 import { NewServiceRequest } from './pages/customer/NewServiceRequest';
@@ -22,40 +23,13 @@ import { MechanicDashboard } from './pages/mechanic/MechanicDashboard';
 import { ServiceQueue } from './pages/mechanic/ServiceQueue';
 import { CompletedJobs } from './pages/mechanic/CompletedJobs';
 
-function RootRedirect() {
-  const { profile, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Memuat...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (profile.role === 'admin') {
-    return <Navigate to="/admin" replace />;
-  } else if (profile.role === 'mechanic') {
-    return <Navigate to="/mechanic" replace />;
-  } else {
-    return <Navigate to="/customer" replace />;
-  }
-}
-
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<RootRedirect />} />
+            <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
