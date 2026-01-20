@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -16,6 +17,25 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { profile, user } = useAuth();
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.matchMedia('(min-width: 1024px)').matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const handleChange = (event: MediaQueryListEvent) => {
+      setIsDesktop(event.matches);
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    setIsDesktop(mediaQuery.matches);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const getMenuItems = () => {
     const role = profile?.role ?? user?.role;
@@ -82,7 +102,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  onClick={onClose}
+                  onClick={() => {
+                    if (!isDesktop) {
+                      onClose();
+                    }
+                  }}
                   end={['/admin', '/mechanic', '/customer'].includes(item.to)}
                   className={({ isActive }) =>
                     `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${

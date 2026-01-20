@@ -12,6 +12,14 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
   .filter(Boolean);
 const sessionCookieName = "autoservice_session";
 const sessions = new Map();
+const isProduction = process.env.NODE_ENV === "production";
+const cookieSameSite = process.env.COOKIE_SAMESITE || (isProduction ? "None" : "Lax");
+const cookieSecureRaw = process.env.COOKIE_SECURE;
+const cookieSecure =
+  cookieSecureRaw !== undefined
+    ? cookieSecureRaw === "true"
+    : isProduction || cookieSameSite.toLowerCase() === "none";
+const sessionMaxAge = Number(process.env.SESSION_MAX_AGE || 60 * 60 * 24 * 7);
 
 app.use(
   cors({
@@ -42,16 +50,23 @@ const setSessionCookie = (res, sessionId) => {
     `${sessionCookieName}=${encodeURIComponent(sessionId)}`,
     "HttpOnly",
     "Path=/",
-    "SameSite=Lax",
-  ];
+    `SameSite=${cookieSameSite}`,
+    cookieSecure ? "Secure" : null,
+    sessionMaxAge ? `Max-Age=${sessionMaxAge}` : null,
+  ].filter(Boolean);
   res.setHeader("Set-Cookie", cookie.join("; "));
 };
 
 const clearSessionCookie = (res) => {
-  res.setHeader(
-    "Set-Cookie",
-    `${sessionCookieName}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`
-  );
+  const cookie = [
+    `${sessionCookieName}=`,
+    "HttpOnly",
+    "Path=/",
+    `SameSite=${cookieSameSite}`,
+    cookieSecure ? "Secure" : null,
+    "Max-Age=0",
+  ].filter(Boolean);
+  res.setHeader("Set-Cookie", cookie.join("; "));
 };
 
 const getSession = (req) => {
