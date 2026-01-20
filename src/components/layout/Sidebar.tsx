@@ -5,8 +5,6 @@ import {
   Users,
   Wrench,
   Car,
-  Settings,
-  LogOut,
   X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -17,14 +15,11 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { profile, signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
+  const { profile, user } = useAuth();
 
   const getMenuItems = () => {
-    if (profile?.role === 'admin') {
+    const role = profile?.role ?? user?.role;
+    if (role === 'admin') {
       return [
         { to: '/admin', icon: LayoutDashboard, label: 'Dasbor' },
         { to: '/admin/service-requests', icon: FileText, label: 'Permintaan Servis' },
@@ -32,7 +27,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         { to: '/admin/customers', icon: Users, label: 'Pelanggan' },
         { to: '/admin/vehicles', icon: Car, label: 'Kendaraan' },
       ];
-    } else if (profile?.role === 'mechanic') {
+    } else if (role === 'mechanic') {
       return [
         { to: '/mechanic', icon: LayoutDashboard, label: 'Dasbor' },
         { to: '/mechanic/queue', icon: FileText, label: 'Antrian Servis' },
@@ -49,12 +44,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   };
 
   const menuItems = getMenuItems();
-  const roleLabels: Record<string, string> = {
-    admin: 'Admin',
-    mechanic: 'Mekanik',
-    customer: 'Pelanggan',
-    superadmin: 'Superadmin',
-  };
 
   return (
     <>
@@ -94,6 +83,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   key={item.to}
                   to={item.to}
                   onClick={onClose}
+                  end={['/admin', '/mechanic', '/customer'].includes(item.to)}
                   className={({ isActive }) =>
                     `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
@@ -109,21 +99,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </nav>
           </div>
 
-          <div className="border-t border-gray-800 p-4">
-            <div className="mb-3 px-4">
-              <p className="text-sm font-medium text-white">{profile?.full_name}</p>
-              <p className="text-xs text-gray-400 capitalize">
-                {profile?.role ? roleLabels[profile.role] ?? profile.role : ''}
-              </p>
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center space-x-3 px-4 py-3 w-full text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-colors"
-            >
-              <LogOut className="h-5 w-5" />
-              <span>Keluar</span>
-            </button>
-          </div>
         </div>
       </aside>
     </>
