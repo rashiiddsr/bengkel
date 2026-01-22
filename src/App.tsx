@@ -19,6 +19,7 @@ import { ServiceRequests } from './pages/admin/ServiceRequests';
 import { Mechanics } from './pages/admin/Mechanics';
 import { Customers } from './pages/admin/Customers';
 import { ServiceTypes } from './pages/admin/ServiceTypes';
+import { Reports } from './pages/admin/Reports';
 
 import { MechanicDashboard } from './pages/mechanic/MechanicDashboard';
 import { ServiceQueue } from './pages/mechanic/ServiceQueue';
@@ -72,6 +73,7 @@ function App() {
               <Route path="mechanics" element={<Mechanics />} />
               <Route path="customers" element={<Customers />} />
               <Route path="service-types" element={<ServiceTypes />} />
+              <Route path="reports" element={<Reports />} />
             </Route>
 
             <Route

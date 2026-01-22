@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   FileText,
+  BarChart3,
   Users,
   Wrench,
   Car,
@@ -49,6 +50,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         { to: '/admin/service-types', icon: ClipboardList, label: 'Daftar Layanan' },
         { to: '/admin/mechanics', icon: Wrench, label: 'Daftar Mekanik' },
         { to: '/admin/customers', icon: Users, label: 'Daftar Pelanggan' },
+        { to: '/admin/reports', icon: BarChart3, label: 'Laporan' },
         { to: '/profile', icon: UserCircle, label: 'Profil' },
       ];
     } else if (role === 'mechanic') {
