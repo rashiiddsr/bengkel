@@ -155,10 +155,37 @@ export type Database = {
           created_at?: string
         }
       }
+      service_progress: {
+        Row: {
+          id: string
+          service_request_id: string
+          progress_date: string
+          description: string
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          service_request_id: string
+          progress_date: string
+          description: string
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          service_request_id?: string
+          progress_date?: string
+          description?: string
+          created_by?: string
+          created_at?: string
+        }
+      }
       service_photos: {
         Row: {
           id: string
           service_request_id: string
+          service_progress_id: string | null
           photo_url: string
           description: string | null
           uploaded_by: string
@@ -167,6 +194,7 @@ export type Database = {
         Insert: {
           id?: string
           service_request_id: string
+          service_progress_id?: string | null
           photo_url: string
           description?: string | null
           uploaded_by: string
@@ -175,6 +203,7 @@ export type Database = {
         Update: {
           id?: string
           service_request_id?: string
+          service_progress_id?: string | null
           photo_url?: string
           description?: string | null
           uploaded_by?: string
@@ -189,4 +218,5 @@ export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type Vehicle = Database['public']['Tables']['vehicles']['Row'];
 export type ServiceRequest = Database['public']['Tables']['service_requests']['Row'];
 export type StatusHistory = Database['public']['Tables']['status_history']['Row'];
+export type ServiceProgress = Database['public']['Tables']['service_progress']['Row'];
 export type ServicePhoto = Database['public']['Tables']['service_photos']['Row'];
