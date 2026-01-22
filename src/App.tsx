@@ -7,6 +7,7 @@ import { DashboardLayout } from './components/layout/DashboardLayout';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Home } from './pages/Home';
+import { ProfilePage } from './pages/Profile';
 
 import { CustomerDashboard } from './pages/customer/CustomerDashboard';
 import { NewServiceRequest } from './pages/customer/NewServiceRequest';
@@ -31,6 +32,17 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'mechanic', 'customer', 'superadmin']}>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<ProfilePage />} />
+            </Route>
 
             <Route
               path="/customer"

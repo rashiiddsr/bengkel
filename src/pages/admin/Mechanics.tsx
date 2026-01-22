@@ -17,6 +17,7 @@ export function Mechanics() {
   const [detailMechanic, setDetailMechanic] = useState<UserProfile | null>(null);
   const [formState, setFormState] = useState({
     fullName: '',
+    username: '',
     phone: '',
     address: '',
     email: '',
@@ -54,7 +55,7 @@ export function Mechanics() {
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredMechanics = mechanics.filter((mechanic) => {
     if (!normalizedSearch) return true;
-    const target = `${mechanic.full_name} ${mechanic.email ?? ''} ${mechanic.phone ?? ''} ${mechanic.address ?? ''}`.toLowerCase();
+    const target = `${mechanic.full_name} ${mechanic.username ?? ''} ${mechanic.email ?? ''} ${mechanic.phone ?? ''} ${mechanic.address ?? ''}`.toLowerCase();
     return target.includes(normalizedSearch);
   });
 
@@ -63,6 +64,7 @@ export function Mechanics() {
     setSelectedMechanic(null);
     setFormState({
       fullName: '',
+      username: '',
       phone: '',
       address: '',
       email: '',
@@ -77,6 +79,7 @@ export function Mechanics() {
     setSelectedMechanic(mechanic);
     setFormState({
       fullName: mechanic.full_name ?? '',
+      username: mechanic.username ?? '',
       phone: mechanic.phone ?? '',
       address: mechanic.address ?? '',
       email: mechanic.email ?? '',
@@ -98,9 +101,12 @@ export function Mechanics() {
           phone: formState.phone,
           address: formState.address || null,
         });
-        const userPayload: { email?: string; password?: string } = {
+        const userPayload: { email?: string; username?: string; password?: string } = {
           email: formState.email.trim(),
         };
+        if (formState.username) {
+          userPayload.username = formState.username.trim();
+        }
         if (formState.password) {
           userPayload.password = formState.password;
         }
@@ -108,6 +114,7 @@ export function Mechanics() {
       } else {
         await api.createMechanic({
           full_name: formState.fullName,
+          username: formState.username,
           email: formState.email,
           password: formState.password,
           phone: formState.phone,
@@ -191,8 +198,16 @@ export function Mechanics() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0">
-                            <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                              <Wrench className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center overflow-hidden">
+                              {mechanic.avatar_url ? (
+                                <img
+                                  src={mechanic.avatar_url}
+                                  alt={mechanic.full_name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Wrench className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              )}
                             </div>
                           </div>
                           <div className="ml-4">
@@ -274,6 +289,10 @@ export function Mechanics() {
                 <p className="font-medium text-gray-900 dark:text-white">{detailMechanic.email || '-'}</p>
               </div>
               <div>
+                <p className="text-gray-500 dark:text-gray-400">Username</p>
+                <p className="font-medium text-gray-900 dark:text-white">{detailMechanic.username || '-'}</p>
+              </div>
+              <div>
                 <p className="text-gray-500 dark:text-gray-400">Telepon</p>
                 <p className="font-medium text-gray-900 dark:text-white">{detailMechanic.phone || '-'}</p>
               </div>
@@ -329,6 +348,16 @@ export function Mechanics() {
             )}
             value={formState.fullName}
             onChange={(e) => setFormState({ ...formState, fullName: e.target.value })}
+            required
+          />
+          <Input
+            label={(
+              <>
+                Username <span className="text-red-500">*</span>
+              </>
+            )}
+            value={formState.username}
+            onChange={(e) => setFormState({ ...formState, username: e.target.value })}
             required
           />
           <Input

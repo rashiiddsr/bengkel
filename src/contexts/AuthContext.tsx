@@ -7,10 +7,17 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   signIn: (
-    email: string,
+    identifier: string,
     password: string
   ) => Promise<{ error: Error | null; profile?: Profile | null }>;
-  signUp: (email: string, password: string, fullName: string, phone: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    email: string,
+    username: string,
+    password: string,
+    fullName: string,
+    phone: string,
+    address?: string
+  ) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -57,9 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadSession();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (identifier: string, password: string) => {
     try {
-      const sessionData = await api.login(email, password);
+      const sessionData = await api.login(identifier, password);
       setUser(sessionData.user);
       setProfile(sessionData.profile);
       return { error: null, profile: sessionData.profile };
@@ -68,13 +75,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string, phone: string) => {
+  const signUp = async (
+    email: string,
+    username: string,
+    password: string,
+    fullName: string,
+    phone: string,
+    address?: string
+  ) => {
     try {
       const sessionData = await api.register({
         email,
+        username,
         password,
         full_name: fullName,
         phone,
+        address: address || null,
       });
       setUser(sessionData.user);
       setProfile(sessionData.profile);

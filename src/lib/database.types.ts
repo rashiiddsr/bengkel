@@ -16,6 +16,7 @@ export type Database = {
           role: 'superadmin' | 'admin' | 'mechanic' | 'customer'
           phone: string | null
           address: string | null
+          avatar_url: string | null
           created_at: string
           updated_at: string
         }
@@ -25,6 +26,7 @@ export type Database = {
           role: 'superadmin' | 'admin' | 'mechanic' | 'customer'
           phone?: string | null
           address?: string | null
+          avatar_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -34,6 +36,7 @@ export type Database = {
           role?: 'superadmin' | 'admin' | 'mechanic' | 'customer'
           phone?: string | null
           address?: string | null
+          avatar_url?: string | null
           created_at?: string
           updated_at?: string
         }

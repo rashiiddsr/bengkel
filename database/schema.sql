@@ -3,6 +3,7 @@ USE bengkel;
 
 CREATE TABLE users (
   id CHAR(36) PRIMARY KEY,
+  username VARCHAR(100) NOT NULL UNIQUE,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('superadmin', 'admin', 'mechanic', 'customer') NOT NULL DEFAULT 'customer',
@@ -17,6 +18,7 @@ CREATE TABLE profiles (
   role ENUM('superadmin', 'admin', 'mechanic', 'customer') NOT NULL DEFAULT 'customer',
   phone VARCHAR(30),
   address TEXT,
+  avatar_url TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_profiles_user FOREIGN KEY (id) REFERENCES users(id) ON DELETE CASCADE
@@ -82,11 +84,11 @@ SET @superadmin_id = UUID();
 SET @admin_id = UUID();
 SET @mechanic_id = UUID();
 
-INSERT INTO users (id, email, password_hash, role)
+INSERT INTO users (id, username, email, password_hash, role)
 VALUES
-  (@superadmin_id, 'superadmin@gmail.com', SHA2('superadmin', 256), 'superadmin'),
-  (@admin_id, 'admin@gmail.com', SHA2('admin', 256), 'admin'),
-  (@mechanic_id, 'mechanik@gmail.com', SHA2('mekanik', 256), 'mechanic');
+  (@superadmin_id, 'superadmin', 'superadmin@gmail.com', SHA2('superadmin', 256), 'superadmin'),
+  (@admin_id, 'admin', 'admin@gmail.com', SHA2('admin', 256), 'admin'),
+  (@mechanic_id, 'mechanik', 'mechanik@gmail.com', SHA2('mekanik', 256), 'mechanic');
 
 INSERT INTO profiles (id, full_name, role)
 VALUES

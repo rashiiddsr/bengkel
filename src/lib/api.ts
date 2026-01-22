@@ -55,6 +55,7 @@ const apiFetch = async <T>(path: string, options: RequestInit = {}) => {
 
 export type AuthUser = {
   id: string;
+  username: string;
   email: string;
   role: Profile['role'] | 'superadmin';
 };
@@ -65,6 +66,7 @@ export type UserAccount = AuthUser & {
 
 export type UserProfile = Profile & {
   email: string | null;
+  username: string | null;
   is_active: boolean;
 };
 
@@ -76,12 +78,19 @@ export type ServiceRequestWithRelations = ServiceRequest & {
 
 export const api = {
   getSession: () => apiFetch<{ user: AuthUser | null; profile: Profile | null }>('/auth/session'),
-  login: (email: string, password: string) =>
+  login: (identifier: string, password: string) =>
     apiFetch<{ user: AuthUser; profile: Profile }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
     }),
-  register: (payload: { email: string; password: string; full_name: string; phone: string }) =>
+  register: (payload: {
+    email: string;
+    username: string;
+    password: string;
+    full_name: string;
+    phone: string;
+    address?: string | null;
+  }) =>
     apiFetch<{ user: AuthUser; profile: Profile }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -93,13 +102,14 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),
-  updateUser: (userId: string, payload: { email?: string; password?: string; is_active?: boolean }) =>
+  updateUser: (userId: string, payload: { email?: string; username?: string; password?: string; is_active?: boolean }) =>
     apiFetch<UserAccount>(`/users/${userId}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),
   createMechanic: (payload: {
     email: string;
+    username: string;
     password: string;
     full_name: string;
     phone?: string | null;
