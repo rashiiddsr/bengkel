@@ -386,6 +386,92 @@ app.post("/mechanics", async (req, res) => {
   }
 });
 
+app.get("/service-types", async (req, res) => {
+  try {
+    const pool = getPool();
+    const filters = [];
+    const values = [];
+    if (req.query.active !== undefined) {
+      const isActive = String(req.query.active).toLowerCase() === "true" || req.query.active === "1";
+      filters.push("is_active = ?");
+      values.push(isActive ? 1 : 0);
+    }
+    const whereClause = filters.length ? ` WHERE ${filters.join(" AND ")}` : "";
+    const orderClause = buildOrderClause(req.query.order, ["name", "created_at"]);
+    const [rows] = await pool.query(`SELECT * FROM service_types${whereClause}${orderClause}`, values);
+    const response = rows.map((row) => ({
+      ...row,
+      is_active: Boolean(row.is_active),
+    }));
+    res.json(response);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post("/service-types", async (req, res) => {
+  const { name, description } = req.body ?? {};
+  if (!name) {
+    return res.status(400).json({ message: "nama layanan wajib diisi" });
+  }
+  try {
+    const pool = getPool();
+    const id = crypto.randomUUID();
+    await pool.query("INSERT INTO service_types (id, name, description) VALUES (?, ?, ?)", [
+      id,
+      name,
+      description || null,
+    ]);
+    const [rows] = await pool.query("SELECT * FROM service_types WHERE id = ?", [id]);
+    const row = rows[0] ?? null;
+    res.status(201).json(row ? { ...row, is_active: Boolean(row.is_active) } : null);
+  } catch (error) {
+    if (error?.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ message: "Nama layanan sudah terdaftar" });
+    }
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.patch("/service-types/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, description, is_active } = req.body ?? {};
+
+  if (name === undefined && description === undefined && is_active === undefined) {
+    return res.status(400).json({ message: "Tidak ada data yang diperbarui" });
+  }
+
+  try {
+    const pool = getPool();
+    const fields = [];
+    const values = [];
+
+    if (name !== undefined) {
+      fields.push("name = ?");
+      values.push(name);
+    }
+    if (description !== undefined) {
+      fields.push("description = ?");
+      values.push(description);
+    }
+    if (is_active !== undefined) {
+      fields.push("is_active = ?");
+      values.push(is_active ? 1 : 0);
+    }
+
+    values.push(id);
+    await pool.query(`UPDATE service_types SET ${fields.join(", ")} WHERE id = ?`, values);
+    const [rows] = await pool.query("SELECT * FROM service_types WHERE id = ?", [id]);
+    const row = rows[0] ?? null;
+    res.json(row ? { ...row, is_active: Boolean(row.is_active) } : null);
+  } catch (error) {
+    if (error?.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ message: "Nama layanan sudah terdaftar" });
+    }
+    res.status(500).json({ message: error.message });
+  }
+});
+
 app.get("/vehicles", async (req, res) => {
   try {
     const pool = getPool();
@@ -568,6 +654,12 @@ app.post("/service-requests", async (req, res) => {
 
   try {
     const pool = getPool();
+    const [typeRows] = await pool.query("SELECT id FROM service_types WHERE name = ? AND is_active = 1", [
+      service_type,
+    ]);
+    if (typeRows.length === 0) {
+      return res.status(400).json({ message: "Jenis layanan tidak tersedia" });
+    }
     const id = crypto.randomUUID();
     await pool.query(
       `INSERT INTO service_requests
