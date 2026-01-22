@@ -18,7 +18,7 @@ export function ServiceQueue() {
   const [editForm, setEditForm] = useState({
     status: '',
     mechanicNotes: '',
-    finalCost: '',
+    totalCost: '',
   });
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export function ServiceQueue() {
 
     const data = await api.listServiceRequests({
       assigned_mechanic_id: user.id,
-      status: 'approved,in_progress,parts_needed,quality_check',
+      status: 'in_progress,awaiting_payment',
       include: 'vehicle,customer',
       order: 'created_at.desc',
     });
@@ -44,7 +44,7 @@ export function ServiceQueue() {
     setEditForm({
       status: job.status,
       mechanicNotes: job.mechanic_notes || '',
-      finalCost: job.final_cost?.toString() || '',
+      totalCost: job.total_cost?.toString() || '',
     });
   };
 
@@ -56,8 +56,8 @@ export function ServiceQueue() {
       mechanic_notes: editForm.mechanicNotes,
     };
 
-    if (editForm.finalCost) {
-      updates.final_cost = parseFloat(editForm.finalCost);
+    if (editForm.totalCost) {
+      updates.total_cost = parseFloat(editForm.totalCost);
     }
 
     await api.updateServiceRequest(selectedJob.id, updates);
@@ -74,10 +74,8 @@ export function ServiceQueue() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      approved: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
       in_progress: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      parts_needed: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-      quality_check: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+      awaiting_payment: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
@@ -233,11 +231,8 @@ export function ServiceQueue() {
             <Select
               label="Status"
               options={[
-                { value: 'approved', label: 'Disetujui (Belum Mulai)' },
                 { value: 'in_progress', label: 'Sedang Dikerjakan' },
-                { value: 'parts_needed', label: 'Menunggu Suku Cadang' },
-                { value: 'quality_check', label: 'Pemeriksaan Kualitas' },
-                { value: 'completed', label: 'Selesai' },
+                { value: 'awaiting_payment', label: 'Menunggu Pembayaran' },
               ]}
               value={editForm.status}
               onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
@@ -245,10 +240,10 @@ export function ServiceQueue() {
 
             <Input
               type="number"
-              label="Biaya Akhir"
-              placeholder="Masukkan biaya akhir"
-              value={editForm.finalCost}
-              onChange={(e) => setEditForm({ ...editForm, finalCost: e.target.value })}
+              label="Total Biaya"
+              placeholder="Masukkan total biaya"
+              value={editForm.totalCost}
+              onChange={(e) => setEditForm({ ...editForm, totalCost: e.target.value })}
               step="0.01"
             />
 

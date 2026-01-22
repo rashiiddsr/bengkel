@@ -4,8 +4,7 @@ export const STATUS_LABELS: Record<ServiceRequest['status'], string> = {
   pending: 'Menunggu',
   approved: 'Disetujui',
   in_progress: 'Sedang Dikerjakan',
-  parts_needed: 'Menunggu Suku Cadang',
-  quality_check: 'Pemeriksaan Kualitas',
+  awaiting_payment: 'Menunggu Pembayaran',
   completed: 'Selesai',
   rejected: 'Ditolak',
 };

@@ -31,7 +31,7 @@ export function CustomerDashboard() {
   };
 
   const pendingCount = requests.filter(r => r.status === 'pending').length;
-  const inProgressCount = requests.filter(r => ['approved', 'in_progress', 'parts_needed', 'quality_check'].includes(r.status)).length;
+  const inProgressCount = requests.filter(r => ['approved', 'in_progress', 'awaiting_payment'].includes(r.status)).length;
   const completedCount = requests.filter(r => r.status === 'completed').length;
 
   return (
@@ -130,6 +130,7 @@ export function CustomerDashboard() {
                       ${request.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : ''}
                       ${request.status === 'approved' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : ''}
                       ${request.status === 'in_progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : ''}
+                      ${request.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' : ''}
                       ${request.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ''}
                       ${request.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : ''}
                     `}

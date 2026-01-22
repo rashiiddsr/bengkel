@@ -34,7 +34,7 @@ export function AdminDashboard() {
       setStats({
         totalRequests: requests.length,
         pendingRequests: requests.filter(r => r.status === 'pending').length,
-        inProgressRequests: requests.filter(r => ['approved', 'in_progress', 'parts_needed', 'quality_check'].includes(r.status)).length,
+        inProgressRequests: requests.filter(r => ['approved', 'in_progress', 'awaiting_payment'].includes(r.status)).length,
         completedRequests: requests.filter(r => r.status === 'completed').length,
         totalMechanics: mechanics?.length || 0,
         totalCustomers: customers?.length || 0,
