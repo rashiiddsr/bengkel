@@ -5,26 +5,15 @@ import { Input, TextArea, Select } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-import type { Vehicle } from '../../lib/database.types';
-
-const SERVICE_TYPES = [
-  'Overhaul Mesin',
-  'Overhaul Transmisi Otomatis',
-  'Overhaul Transmisi Manual',
-  'Sistem Suspensi',
-  'Kelistrikan',
-  'Servis ECU',
-  'Sistem ABS',
-  'Central Lock',
-  'Pemasangan ECU Racing',
-  'Perbaikan Cat & Bodi',
-  'Inspeksi Kendaraan',
-];
+import type { Vehicle, ServiceType } from '../../lib/database.types';
 
 export function NewServiceRequest() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [serviceTypesLoading, setServiceTypesLoading] = useState(true);
+  const [serviceTypesError, setServiceTypesError] = useState('');
   const [showNewVehicle, setShowNewVehicle] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,6 +38,7 @@ export function NewServiceRequest() {
 
   useEffect(() => {
     fetchVehicles();
+    fetchServiceTypes();
   }, [user]);
 
   const fetchVehicles = async () => {
@@ -60,6 +50,18 @@ export function NewServiceRequest() {
     });
 
     setVehicles(data);
+  };
+
+  const fetchServiceTypes = async () => {
+    try {
+      setServiceTypesError('');
+      const data = await api.listServiceTypes({ active: true, order: 'name.asc' });
+      setServiceTypes(data);
+    } catch (fetchError) {
+      setServiceTypesError((fetchError as Error).message || 'Gagal memuat daftar layanan.');
+    } finally {
+      setServiceTypesLoading(false);
+    }
   };
 
   const handleAddVehicle = async () => {
@@ -98,6 +100,10 @@ export function NewServiceRequest() {
 
     if (!formData.vehicleId) {
       setError('Silakan pilih kendaraan');
+      return;
+    }
+    if (!formData.serviceType) {
+      setError('Silakan pilih jenis servis');
       return;
     }
 
@@ -221,13 +227,24 @@ export function NewServiceRequest() {
             <Select
               label="Jenis Servis"
               options={[
-                { value: '', label: 'Pilih jenis servis' },
-                ...SERVICE_TYPES.map(type => ({ value: type, label: type })),
+                {
+                  value: '',
+                  label: serviceTypesLoading
+                    ? 'Memuat jenis servis...'
+                    : serviceTypes.length === 0
+                      ? 'Belum ada layanan aktif'
+                      : 'Pilih jenis servis',
+                },
+                ...serviceTypes.map(type => ({ value: type.name, label: type.name })),
               ]}
               value={formData.serviceType}
               onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
               required
+              disabled={serviceTypesLoading || serviceTypes.length === 0}
             />
+            {serviceTypesError && (
+              <p className="text-sm text-red-600 dark:text-red-400">{serviceTypesError}</p>
+            )}
 
             <TextArea
               label="Deskripsi"

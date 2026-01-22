@@ -7,6 +7,7 @@ import {
   Wrench,
   Car,
   UserCircle,
+  ClipboardList,
   X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -44,6 +45,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       return [
         { to: '/admin', icon: LayoutDashboard, label: 'Beranda' },
         { to: '/admin/service-requests', icon: FileText, label: 'Daftar Servis' },
+        { to: '/admin/service-types', icon: ClipboardList, label: 'Daftar Layanan' },
         { to: '/admin/mechanics', icon: Wrench, label: 'Daftar Mekanik' },
         { to: '/admin/customers', icon: Users, label: 'Daftar Pelanggan' },
         { to: '/profile', icon: UserCircle, label: 'Profil' },

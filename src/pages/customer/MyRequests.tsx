@@ -5,7 +5,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input, TextArea, Select } from '../../components/ui/Input';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-import type { ServiceRequest, Vehicle, StatusHistory, Profile } from '../../lib/database.types';
+import type { ServiceRequest, Vehicle, StatusHistory, Profile, ServiceType } from '../../lib/database.types';
 import { Eye, Clock, Plus, Search } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { formatCurrency, formatDate, formatDateTime, formatStatus } from '../../lib/format';
@@ -15,20 +15,6 @@ interface RequestWithDetails extends ServiceRequest {
   mechanic?: Profile;
   history?: StatusHistory[];
 }
-
-const SERVICE_TYPES = [
-  'Overhaul Mesin',
-  'Overhaul Transmisi Otomatis',
-  'Overhaul Transmisi Manual',
-  'Sistem Suspensi',
-  'Kelistrikan',
-  'Servis ECU',
-  'Sistem ABS',
-  'Central Lock',
-  'Pemasangan ECU Racing',
-  'Perbaikan Cat & Bodi',
-  'Inspeksi Kendaraan',
-];
 
 const REFRESH_INTERVAL = 30000;
 
@@ -41,6 +27,9 @@ export function MyRequests() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [serviceTypesLoading, setServiceTypesLoading] = useState(true);
+  const [serviceTypesError, setServiceTypesError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState('');
@@ -59,6 +48,7 @@ export function MyRequests() {
     if (!user) return;
     fetchRequests();
     fetchVehicles();
+    fetchServiceTypes();
     const intervalId = window.setInterval(() => {
       fetchRequests();
     }, REFRESH_INTERVAL);
@@ -97,6 +87,18 @@ export function MyRequests() {
     setVehicles(data);
   };
 
+  const fetchServiceTypes = async () => {
+    try {
+      setServiceTypesError('');
+      const data = await api.listServiceTypes({ active: true, order: 'name.asc' });
+      setServiceTypes(data);
+    } catch (fetchError) {
+      setServiceTypesError((fetchError as Error).message || 'Gagal memuat daftar layanan.');
+    } finally {
+      setServiceTypesLoading(false);
+    }
+  };
+
   const fetchHistory = async (requestId: string) => {
     return api.listStatusHistory({
       service_request_id: requestId,
@@ -118,6 +120,10 @@ export function MyRequests() {
 
     if (!formData.vehicleId) {
       setCreateError('Silakan pilih kendaraan');
+      return;
+    }
+    if (!formData.serviceType) {
+      setCreateError('Silakan pilih jenis servis');
       return;
     }
 
@@ -412,13 +418,24 @@ export function MyRequests() {
               </>
             }
             options={[
-              { value: '', label: 'Pilih jenis servis' },
-              ...SERVICE_TYPES.map(type => ({ value: type, label: type })),
+              {
+                value: '',
+                label: serviceTypesLoading
+                  ? 'Memuat jenis servis...'
+                  : serviceTypes.length === 0
+                    ? 'Belum ada layanan aktif'
+                    : 'Pilih jenis servis',
+              },
+              ...serviceTypes.map(type => ({ value: type.name, label: type.name })),
             ]}
             value={formData.serviceType}
             onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
             required
+            disabled={serviceTypesLoading || serviceTypes.length === 0}
           />
+          {serviceTypesError && (
+            <p className="text-sm text-red-600 dark:text-red-400">{serviceTypesError}</p>
+          )}
 
           <TextArea
             label={

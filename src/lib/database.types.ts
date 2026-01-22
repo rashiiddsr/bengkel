@@ -73,6 +73,32 @@ export type Database = {
           created_at?: string
         }
       }
+      service_types: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
       service_requests: {
         Row: {
           id: string
@@ -216,6 +242,7 @@ export type Database = {
 
 export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type Vehicle = Database['public']['Tables']['vehicles']['Row'];
+export type ServiceType = Database['public']['Tables']['service_types']['Row'];
 export type ServiceRequest = Database['public']['Tables']['service_requests']['Row'];
 export type StatusHistory = Database['public']['Tables']['status_history']['Row'];
 export type ServiceProgress = Database['public']['Tables']['service_progress']['Row'];

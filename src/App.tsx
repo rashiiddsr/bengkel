@@ -18,6 +18,7 @@ import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { ServiceRequests } from './pages/admin/ServiceRequests';
 import { Mechanics } from './pages/admin/Mechanics';
 import { Customers } from './pages/admin/Customers';
+import { ServiceTypes } from './pages/admin/ServiceTypes';
 
 import { MechanicDashboard } from './pages/mechanic/MechanicDashboard';
 import { ServiceQueue } from './pages/mechanic/ServiceQueue';
@@ -70,6 +71,7 @@ function App() {
               <Route path="service-requests" element={<ServiceRequests />} />
               <Route path="mechanics" element={<Mechanics />} />
               <Route path="customers" element={<Customers />} />
+              <Route path="service-types" element={<ServiceTypes />} />
             </Route>
 
             <Route

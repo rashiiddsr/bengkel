@@ -1,4 +1,12 @@
-import type { Profile, ServiceRequest, Vehicle, StatusHistory, ServiceProgress, ServicePhoto } from './database.types';
+import type {
+  Profile,
+  ServiceRequest,
+  Vehicle,
+  StatusHistory,
+  ServiceProgress,
+  ServicePhoto,
+  ServiceType,
+} from './database.types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -152,6 +160,17 @@ export const api = {
   }) =>
     apiFetch<Profile>('/mechanics', {
       method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  listServiceTypes: (params?: QueryParams) => apiFetch<ServiceType[]>(`/service-types${buildQuery(params)}`),
+  createServiceType: (payload: { name: string; description?: string | null }) =>
+    apiFetch<ServiceType>('/service-types', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateServiceType: (serviceTypeId: string, payload: Partial<ServiceType>) =>
+    apiFetch<ServiceType>(`/service-types/${serviceTypeId}`, {
+      method: 'PATCH',
       body: JSON.stringify(payload),
     }),
   listVehicles: (params?: QueryParams) => apiFetch<Vehicle[]>(`/vehicles${buildQuery(params)}`),

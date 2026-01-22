@@ -36,6 +36,15 @@ CREATE TABLE vehicles (
   CONSTRAINT fk_vehicles_customer FOREIGN KEY (customer_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
+CREATE TABLE service_types (
+  id CHAR(36) PRIMARY KEY,
+  name VARCHAR(150) NOT NULL UNIQUE,
+  description TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 CREATE TABLE service_requests (
   id CHAR(36) PRIMARY KEY,
   customer_id CHAR(36) NOT NULL,
@@ -108,3 +117,17 @@ VALUES
   (@superadmin_id, 'Superadmin', 'superadmin'),
   (@admin_id, 'Admin', 'admin'),
   (@mechanic_id, 'Mekanik Default', 'mechanic');
+
+INSERT INTO service_types (id, name, description)
+VALUES
+  (UUID(), 'Overhaul Mesin', 'Perbaikan menyeluruh pada komponen mesin utama.'),
+  (UUID(), 'Overhaul Transmisi Otomatis', 'Perawatan dan perbaikan sistem transmisi otomatis.'),
+  (UUID(), 'Overhaul Transmisi Manual', 'Perbaikan dan penyetelan transmisi manual.'),
+  (UUID(), 'Sistem Suspensi', 'Diagnosa serta perbaikan sistem suspensi kendaraan.'),
+  (UUID(), 'Kelistrikan', 'Perbaikan dan pengecekan sistem kelistrikan kendaraan.'),
+  (UUID(), 'Servis ECU', 'Diagnosa dan pemeliharaan ECU kendaraan.'),
+  (UUID(), 'Sistem ABS', 'Pemeriksaan serta servis sistem pengereman ABS.'),
+  (UUID(), 'Central Lock', 'Perbaikan modul central lock kendaraan.'),
+  (UUID(), 'Pemasangan ECU Racing', 'Instalasi ECU racing untuk performa optimal.'),
+  (UUID(), 'Perbaikan Cat & Bodi', 'Perbaikan bodi dan pengecatan kendaraan.'),
+  (UUID(), 'Inspeksi Kendaraan', 'Pemeriksaan menyeluruh kondisi kendaraan.');
