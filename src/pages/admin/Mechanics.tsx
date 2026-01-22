@@ -4,7 +4,7 @@ import { Input, TextArea } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { api, type UserProfile } from '../../lib/api';
-import { Plus, Search, Wrench } from 'lucide-react';
+import { Eye, Pencil, Plus, Search, Wrench } from 'lucide-react';
 
 export function Mechanics() {
   const [mechanics, setMechanics] = useState<UserProfile[]>([]);
@@ -95,7 +95,7 @@ export function Mechanics() {
       if (isEditing && selectedMechanic) {
         await api.updateProfile(selectedMechanic.id, {
           full_name: formState.fullName,
-          phone: formState.phone || null,
+          phone: formState.phone,
           address: formState.address || null,
         });
         const userPayload: { email?: string; password?: string } = {
@@ -110,7 +110,7 @@ export function Mechanics() {
           full_name: formState.fullName,
           email: formState.email,
           password: formState.password,
-          phone: formState.phone || null,
+          phone: formState.phone,
           address: formState.address || null,
         });
       }
@@ -212,20 +212,39 @@ export function Mechanics() {
                         {mechanicStats[mechanic.id]?.completed || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        <div className="flex flex-wrap gap-2">
-                          <Button variant="secondary" size="sm" onClick={() => setDetailMechanic(mechanic)}>
-                            Detail
-                          </Button>
-                          <Button variant="primary" size="sm" onClick={() => handleEdit(mechanic)}>
-                            Edit
-                          </Button>
-                          <Button
-                            variant={mechanic.is_active ? 'danger' : 'success'}
-                            size="sm"
-                            onClick={() => handleToggleActive(mechanic)}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setDetailMechanic(mechanic)}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500/40 dark:hover:bg-blue-500/10"
+                            aria-label="Lihat detail mekanik"
                           >
-                            {mechanic.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-                          </Button>
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(mechanic)}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500/40 dark:hover:bg-blue-500/10"
+                            aria-label="Edit mekanik"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleActive(mechanic)}
+                            role="switch"
+                            aria-checked={mechanic.is_active}
+                            aria-label={mechanic.is_active ? 'Nonaktifkan mekanik' : 'Aktifkan mekanik'}
+                            className={`relative inline-flex h-6 w-12 items-center rounded-full transition ${
+                              mechanic.is_active ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
+                                mechanic.is_active ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -303,29 +322,46 @@ export function Mechanics() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
-            label="Nama Lengkap"
+            label={(
+              <>
+                Nama Lengkap <span className="text-red-500">*</span>
+              </>
+            )}
             value={formState.fullName}
             onChange={(e) => setFormState({ ...formState, fullName: e.target.value })}
             required
           />
           <Input
-            label="Email"
+            label={(
+              <>
+                Email <span className="text-red-500">*</span>
+              </>
+            )}
             type="email"
             value={formState.email}
             onChange={(e) => setFormState({ ...formState, email: e.target.value })}
             required
           />
           <Input
-            label={isEditing ? 'Password Baru (opsional)' : 'Password'}
+            label={isEditing ? 'Password Baru (opsional)' : (
+              <>
+                Password <span className="text-red-500">*</span>
+              </>
+            )}
             type="password"
             value={formState.password}
             onChange={(e) => setFormState({ ...formState, password: e.target.value })}
             required={!isEditing}
           />
           <Input
-            label="Telepon"
+            label={(
+              <>
+                Telepon <span className="text-red-500">*</span>
+              </>
+            )}
             value={formState.phone}
             onChange={(e) => setFormState({ ...formState, phone: e.target.value })}
+            required
           />
           <TextArea
             label="Alamat"
