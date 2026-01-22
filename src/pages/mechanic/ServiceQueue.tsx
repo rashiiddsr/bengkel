@@ -13,6 +13,7 @@ export function ServiceQueue() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [editForm, setEditForm] = useState({
     status: '',
@@ -81,6 +82,15 @@ export function ServiceQueue() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredJobs = jobs.filter((job) => {
+    if (!normalizedSearch) return true;
+    const vehicleLabel = `${job.vehicle?.make ?? ''} ${job.vehicle?.model ?? ''} ${job.vehicle?.license_plate ?? ''}`;
+    const customerLabel = `${job.customer?.full_name ?? ''} ${job.customer?.phone ?? ''}`;
+    const target = `${job.service_type} ${vehicleLabel} ${customerLabel} ${job.status}`.toLowerCase();
+    return target.includes(normalizedSearch);
+  });
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
@@ -89,11 +99,22 @@ export function ServiceQueue() {
 
       <Card>
         <CardBody>
+          <div className="mb-4 max-w-md">
+            <Input
+              placeholder="Cari pekerjaan..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : jobs.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
               Tidak ada pekerjaan aktif di antrian
+            </p>
+          ) : filteredJobs.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+              Tidak ada pekerjaan yang cocok dengan pencarian
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -121,7 +142,7 @@ export function ServiceQueue() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {jobs.map((job) => (
+                  {filteredJobs.map((job) => (
                     <tr key={job.id}>
                       <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">
                         {job.service_type}
@@ -149,6 +170,8 @@ export function ServiceQueue() {
                           size="sm"
                           variant="secondary"
                           onClick={() => handleEdit(job)}
+                          title="Perbarui Status"
+                          aria-label="Perbarui Status"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>

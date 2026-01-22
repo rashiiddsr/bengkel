@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Users, Wrench, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card, CardBody } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
 import { api } from '../../lib/api';
 import { formatDate, formatStatus } from '../../lib/format';
 
@@ -16,6 +17,7 @@ export function AdminDashboard() {
   });
   const [recentRequests, setRecentRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
@@ -52,6 +54,14 @@ export function AdminDashboard() {
     { label: 'Pelanggan', value: stats.totalCustomers, icon: Users, color: 'blue' },
   ];
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredRecentRequests = recentRequests.filter((request) => {
+    if (!normalizedSearch) return true;
+    const vehicleLabel = `${request.vehicle?.make ?? ''} ${request.vehicle?.model ?? ''} ${request.vehicle?.license_plate ?? ''}`;
+    const target = `${request.customer?.full_name ?? ''} ${request.service_type} ${vehicleLabel} ${request.status}`.toLowerCase();
+    return target.includes(normalizedSearch);
+  });
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -78,7 +88,7 @@ export function AdminDashboard() {
 
       <Card>
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Permintaan Servis Terbaru
             </h3>
@@ -91,10 +101,21 @@ export function AdminDashboard() {
           </div>
         </div>
         <CardBody>
+          <div className="mb-4 max-w-md">
+            <Input
+              placeholder="Cari permintaan servis..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : recentRequests.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Belum ada permintaan</p>
+          ) : filteredRecentRequests.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+              Tidak ada permintaan yang cocok dengan pencarian
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -118,7 +139,7 @@ export function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {recentRequests.map((request) => (
+                  {filteredRecentRequests.map((request) => (
                     <tr key={request.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {request.customer?.full_name}

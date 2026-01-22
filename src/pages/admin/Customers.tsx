@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
 import { api } from '../../lib/api';
 import type { Profile } from '../../lib/database.types';
 import { Users } from 'lucide-react';
@@ -8,6 +9,7 @@ export function Customers() {
   const [customers, setCustomers] = useState<Profile[]>([]);
   const [customerStats, setCustomerStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchCustomers();
@@ -37,6 +39,13 @@ export function Customers() {
     setLoading(false);
   };
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredCustomers = customers.filter((customer) => {
+    if (!normalizedSearch) return true;
+    const target = `${customer.full_name} ${customer.phone ?? ''} ${customer.address ?? ''}`.toLowerCase();
+    return target.includes(normalizedSearch);
+  });
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
@@ -45,10 +54,21 @@ export function Customers() {
 
       <Card>
         <CardBody>
+          <div className="mb-4 max-w-md">
+            <Input
+              placeholder="Cari pelanggan..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : customers.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Tidak ada pelanggan</p>
+          ) : filteredCustomers.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+              Tidak ada pelanggan yang cocok dengan pencarian
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -72,7 +92,7 @@ export function Customers() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {customers.map((customer) => (
+                  {filteredCustomers.map((customer) => (
                     <tr key={customer.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">

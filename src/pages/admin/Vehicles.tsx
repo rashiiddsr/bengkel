@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
 import { api } from '../../lib/api';
 import type { Vehicle, Profile } from '../../lib/database.types';
 import { Car } from 'lucide-react';
@@ -12,6 +13,7 @@ interface VehicleWithCustomer extends Vehicle {
 export function Vehicles() {
   const [vehicles, setVehicles] = useState<VehicleWithCustomer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchVehicles();
@@ -26,6 +28,13 @@ export function Vehicles() {
     setLoading(false);
   };
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredVehicles = vehicles.filter((vehicle) => {
+    if (!normalizedSearch) return true;
+    const target = `${vehicle.make} ${vehicle.model} ${vehicle.license_plate} ${vehicle.customer?.full_name ?? ''}`.toLowerCase();
+    return target.includes(normalizedSearch);
+  });
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
@@ -34,10 +43,21 @@ export function Vehicles() {
 
       <Card>
         <CardBody>
+          <div className="mb-4 max-w-md">
+            <Input
+              placeholder="Cari kendaraan..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : vehicles.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Tidak ada kendaraan</p>
+          ) : filteredVehicles.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+              Tidak ada kendaraan yang cocok dengan pencarian
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -61,7 +81,7 @@ export function Vehicles() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {vehicles.map((vehicle) => (
+                  {filteredVehicles.map((vehicle) => (
                     <tr key={vehicle.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">

@@ -22,6 +22,7 @@ export function ServiceRequests() {
   const [selectedRequest, setSelectedRequest] = useState<RequestWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [editForm, setEditForm] = useState({
     status: '',
@@ -99,9 +100,18 @@ export function ServiceRequests() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const filteredRequests = filterStatus === 'all'
-    ? requests
-    : requests.filter(r => r.status === filterStatus);
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredRequests = requests.filter((request) => {
+    if (filterStatus !== 'all' && request.status !== filterStatus) {
+      return false;
+    }
+    if (!normalizedSearch) return true;
+    const vehicleLabel = `${request.vehicle?.make ?? ''} ${request.vehicle?.model ?? ''} ${request.vehicle?.license_plate ?? ''}`;
+    const mechanicLabel = request.mechanic?.full_name ?? '';
+    const customerLabel = request.customer?.full_name ?? '';
+    const target = `${customerLabel} ${request.service_type} ${vehicleLabel} ${mechanicLabel} ${request.status}`.toLowerCase();
+    return target.includes(normalizedSearch);
+  });
 
   return (
     <div>
@@ -109,26 +119,39 @@ export function ServiceRequests() {
         Kelola Permintaan Servis
       </h1>
 
-      <div className="mb-4">
-        <Select
-          options={[
-            { value: 'all', label: 'Semua Permintaan' },
-            { value: 'pending', label: 'Menunggu' },
-            { value: 'approved', label: 'Disetujui' },
-            { value: 'in_progress', label: 'Sedang Dikerjakan' },
-            { value: 'completed', label: 'Selesai' },
-          ]}
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-        />
+      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="w-full md:max-w-xs">
+          <Select
+            options={[
+              { value: 'all', label: 'Semua Permintaan' },
+              { value: 'pending', label: 'Menunggu' },
+              { value: 'approved', label: 'Disetujui' },
+              { value: 'in_progress', label: 'Sedang Dikerjakan' },
+              { value: 'completed', label: 'Selesai' },
+            ]}
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          />
+        </div>
+        <div className="w-full md:max-w-sm">
+          <Input
+            placeholder="Cari permintaan servis..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
       <Card>
         <CardBody>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
-          ) : filteredRequests.length === 0 ? (
+          ) : requests.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Tidak ada permintaan</p>
+          ) : filteredRequests.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+              Tidak ada permintaan yang cocok dengan pencarian
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -189,6 +212,8 @@ export function ServiceRequests() {
                           size="sm"
                           variant="secondary"
                           onClick={() => handleEdit(request)}
+                          title="Edit Permintaan"
+                          aria-label="Edit Permintaan"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>

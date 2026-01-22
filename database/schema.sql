@@ -28,6 +28,7 @@ CREATE TABLE vehicles (
   model VARCHAR(100) NOT NULL,
   year INT NOT NULL,
   license_plate VARCHAR(32) NOT NULL,
+  photo_url TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_vehicles_customer FOREIGN KEY (customer_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
