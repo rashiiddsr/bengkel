@@ -1,4 +1,4 @@
-import type { Profile, ServiceRequest, Vehicle, StatusHistory } from './database.types';
+import type { Profile, ServiceRequest, Vehicle, StatusHistory, ServiceProgress, ServicePhoto } from './database.types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -204,6 +204,27 @@ export const api = {
     changed_by: string;
   }) =>
     apiFetch<StatusHistory>('/status-history', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  createServiceProgress: (payload: {
+    service_request_id: string;
+    progress_date: string;
+    description: string;
+    created_by: string;
+  }) =>
+    apiFetch<ServiceProgress>('/service-progress', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  createServicePhoto: (payload: {
+    service_request_id: string;
+    service_progress_id?: string | null;
+    photo_url: string;
+    description?: string | null;
+    uploaded_by: string;
+  }) =>
+    apiFetch<ServicePhoto>('/service-photos', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),

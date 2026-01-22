@@ -419,8 +419,45 @@ export function ServiceRequests() {
             )}
 
             {selectedRequest.status === 'in_progress' && (
-              <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-300">
-                Detail servis akan tersedia pada pembaruan berikutnya.
+              <div className="space-y-3 rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-600 dark:border-gray-600 dark:text-gray-200">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Pemilik</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {selectedRequest.customer?.full_name ?? '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Mobil</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {selectedRequest.vehicle?.make} {selectedRequest.vehicle?.model}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {selectedRequest.vehicle?.license_plate}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Mekanik</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {selectedRequest.mechanic?.full_name ?? '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${getStatusColor(selectedRequest.status)}`}>
+                      {formatStatus(selectedRequest.status)}
+                    </span>
+                  </div>
+                </div>
+
+                {selectedRequest.admin_notes && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Catatan Admin</p>
+                    <p className="text-gray-900 dark:text-white">
+                      {selectedRequest.admin_notes}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

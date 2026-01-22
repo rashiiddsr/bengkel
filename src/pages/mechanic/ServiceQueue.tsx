@@ -5,7 +5,7 @@ import { Input, TextArea, Select } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { Edit, Search } from 'lucide-react';
+import { ClipboardList, Eye, Search, CheckCircle, Upload } from 'lucide-react';
 import { formatCurrency, formatStatus } from '../../lib/format';
 
 const REFRESH_INTERVAL = 30000;
@@ -13,14 +13,22 @@ const REFRESH_INTERVAL = 30000;
 export function ServiceQueue() {
   const { user } = useAuth();
   const [jobs, setJobs] = useState<any[]>([]);
-  const [selectedJob, setSelectedJob] = useState<any | null>(null);
+  const [detailJob, setDetailJob] = useState<any | null>(null);
+  const [progressJob, setProgressJob] = useState<any | null>(null);
+  const [statusJob, setStatusJob] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [editForm, setEditForm] = useState({
-    status: '',
+  const [progressForm, setProgressForm] = useState({
+    progressDate: '',
+    description: '',
+    photoFile: null as File | null,
+    photoDescription: '',
+  });
+
+  const [statusForm, setStatusForm] = useState({
+    status: 'awaiting_payment',
     mechanicNotes: '',
-    totalCost: '',
   });
 
   useEffect(() => {
@@ -37,7 +45,7 @@ export function ServiceQueue() {
 
     const data = await api.listServiceRequests({
       assigned_mechanic_id: user.id,
-      status: 'in_progress,awaiting_payment',
+      status: 'in_progress',
       include: 'vehicle,customer',
       order: 'created_at.desc',
     });
@@ -46,36 +54,77 @@ export function ServiceQueue() {
     setLoading(false);
   };
 
-  const handleEdit = (job: any) => {
-    setSelectedJob(job);
-    setEditForm({
-      status: job.status,
-      mechanicNotes: job.mechanic_notes || '',
-      totalCost: job.total_cost?.toString() || '',
+  const handleOpenProgress = (job: any) => {
+    setProgressJob(job);
+    setProgressForm({
+      progressDate: new Date().toISOString().split('T')[0],
+      description: '',
+      photoFile: null,
+      photoDescription: '',
     });
   };
 
-  const handleUpdate = async () => {
-    if (!selectedJob || !user) return;
+  const handleOpenStatus = (job: any) => {
+    setStatusJob(job);
+    setStatusForm({
+      status: 'awaiting_payment',
+      mechanicNotes: job.mechanic_notes || '',
+    });
+  };
 
-    const updates: any = {
-      status: editForm.status,
-      mechanic_notes: editForm.mechanicNotes,
-    };
-
-    if (editForm.totalCost) {
-      updates.total_cost = parseFloat(editForm.totalCost);
+  const handleCreateProgress = async () => {
+    if (!progressJob || !user) return;
+    if (!progressForm.progressDate || !progressForm.description.trim()) {
+      window.alert('Tanggal update dan deskripsi progres wajib diisi.');
+      return;
     }
 
-    await api.updateServiceRequest(selectedJob.id, updates);
-    await api.createStatusHistory({
-        service_request_id: selectedJob.id,
-        status: editForm.status,
-        notes: editForm.mechanicNotes,
-        changed_by: user.id,
-      });
+    const progress = await api.createServiceProgress({
+      service_request_id: progressJob.id,
+      progress_date: progressForm.progressDate,
+      description: progressForm.description.trim(),
+      created_by: user.id,
+    });
 
-    setSelectedJob(null);
+    if (progressForm.photoFile) {
+      const photoUrl = await api.uploadImage(progressForm.photoFile);
+      await api.createServicePhoto({
+        service_request_id: progressJob.id,
+        service_progress_id: progress.id,
+        photo_url: photoUrl,
+        description: progressForm.photoDescription.trim() || null,
+        uploaded_by: user.id,
+      });
+    }
+
+    setProgressJob(null);
+    fetchJobs();
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!statusJob || !user) return;
+    if (!statusForm.mechanicNotes.trim()) {
+      window.alert('Catatan mekanik wajib diisi sebelum memperbarui status.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Setelah status diperbarui, servis akan berpindah ke menu Pekerjaan Selesai dan status admin menjadi Menunggu Pembayaran. Lanjutkan?'
+    );
+    if (!confirmed) return;
+
+    await api.updateServiceRequest(statusJob.id, {
+      status: statusForm.status,
+      mechanic_notes: statusForm.mechanicNotes.trim(),
+    });
+    await api.createStatusHistory({
+      service_request_id: statusJob.id,
+      status: statusForm.status,
+      notes: statusForm.mechanicNotes.trim(),
+      changed_by: user.id,
+    });
+
+    setStatusJob(null);
     fetchJobs();
   };
 
@@ -175,15 +224,35 @@ export function ServiceQueue() {
                         {job.estimated_cost ? formatCurrency(job.estimated_cost) : '-'}
                       </td>
                       <td className="px-4 py-4">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleEdit(job)}
-                          title="Perbarui Status"
-                          aria-label="Perbarui Status"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => setDetailJob(job)}
+                            title="Lihat Detail"
+                            aria-label="Lihat Detail"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleOpenProgress(job)}
+                            title="Laporan Kondisi"
+                            aria-label="Laporan Kondisi"
+                          >
+                            <ClipboardList className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleOpenStatus(job)}
+                            title="Perbarui Status"
+                            aria-label="Perbarui Status"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -195,76 +264,188 @@ export function ServiceQueue() {
       </Card>
 
       <Modal
-        isOpen={!!selectedJob}
-        onClose={() => setSelectedJob(null)}
-        title="Perbarui Status Servis"
+        isOpen={!!detailJob}
+        onClose={() => setDetailJob(null)}
+        title="Detail Servis"
         size="lg"
       >
-        {selectedJob && (
+        {detailJob && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Pemilik</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {detailJob.customer?.full_name ?? '-'}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {detailJob.customer?.phone ?? '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Mobil</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {detailJob.vehicle?.make} {detailJob.vehicle?.model}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {detailJob.vehicle?.license_plate}
+                </p>
+              </div>
+            </div>
+
+            {detailJob.admin_notes && (
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Catatan Admin</p>
+                <p className="text-gray-900 dark:text-white">
+                  {detailJob.admin_notes}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={!!progressJob}
+        onClose={() => setProgressJob(null)}
+        title="Laporan Kondisi Servis"
+        size="lg"
+      >
+        {progressJob && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Jenis Servis</p>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  {selectedJob.service_type}
+                  {progressJob.service_type}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Kendaraan</p>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  {selectedJob.vehicle?.make} {selectedJob.vehicle?.model}
+                  {progressJob.vehicle?.make} {progressJob.vehicle?.model}
                 </p>
               </div>
             </div>
 
-            {selectedJob.description && (
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Keluhan Pelanggan</p>
-                <p className="text-gray-900 dark:text-white">
-                  {selectedJob.description}
-                </p>
-              </div>
-            )}
+            <Input
+              type="date"
+              label={
+                <span>
+                  Tanggal Update <span className="text-red-500">*</span>
+                </span>
+              }
+              value={progressForm.progressDate}
+              onChange={(e) => setProgressForm({ ...progressForm, progressDate: e.target.value })}
+            />
 
-            {selectedJob.admin_notes && (
+            <TextArea
+              label={
+                <span>
+                  Deskripsi Progres <span className="text-red-500">*</span>
+                </span>
+              }
+              placeholder="Jelaskan progres servis..."
+              value={progressForm.description}
+              onChange={(e) => setProgressForm({ ...progressForm, description: e.target.value })}
+              rows={4}
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Foto Progres (Opsional)
+              </label>
+              <div className="flex items-center gap-3">
+                <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 cursor-pointer text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                  <Upload className="h-4 w-4" />
+                  Unggah Foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) =>
+                      setProgressForm({ ...progressForm, photoFile: event.target.files?.[0] ?? null })
+                    }
+                  />
+                </label>
+                {progressForm.photoFile ? (
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    {progressForm.photoFile.name}
+                  </span>
+                ) : (
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Tidak ada foto dipilih
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <TextArea
+              label="Deskripsi Foto (Opsional)"
+              placeholder="Tambahkan keterangan foto..."
+              value={progressForm.photoDescription}
+              onChange={(e) =>
+                setProgressForm({ ...progressForm, photoDescription: e.target.value })
+              }
+              rows={3}
+            />
+
+            <div className="flex space-x-4 pt-4">
+              <Button onClick={handleCreateProgress}>Simpan Progres</Button>
+              <Button variant="secondary" onClick={() => setProgressJob(null)}>
+                Batal
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={!!statusJob}
+        onClose={() => setStatusJob(null)}
+        title="Perbarui Status Servis"
+        size="lg"
+      >
+        {statusJob && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Catatan Admin</p>
-                <p className="text-gray-900 dark:text-white">
-                  {selectedJob.admin_notes}
+                <p className="text-sm text-gray-500 dark:text-gray-400">Jenis Servis</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {statusJob.service_type}
                 </p>
               </div>
-            )}
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Kendaraan</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {statusJob.vehicle?.make} {statusJob.vehicle?.model}
+                </p>
+              </div>
+            </div>
 
             <Select
               label="Status"
               options={[
-                { value: 'in_progress', label: 'Sedang Dikerjakan' },
                 { value: 'awaiting_payment', label: 'Menunggu Pembayaran' },
               ]}
-              value={editForm.status}
-              onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-            />
-
-            <Input
-              type="number"
-              label="Total Biaya"
-              placeholder="Masukkan total biaya"
-              value={editForm.totalCost}
-              onChange={(e) => setEditForm({ ...editForm, totalCost: e.target.value })}
-              step="0.01"
+              value={statusForm.status}
+              onChange={(e) => setStatusForm({ ...statusForm, status: e.target.value })}
             />
 
             <TextArea
-              label="Catatan Mekanik"
+              label={
+                <span>
+                  Catatan Mekanik <span className="text-red-500">*</span>
+                </span>
+              }
               placeholder="Tambahkan catatan servis..."
-              value={editForm.mechanicNotes}
-              onChange={(e) => setEditForm({ ...editForm, mechanicNotes: e.target.value })}
+              value={statusForm.mechanicNotes}
+              onChange={(e) => setStatusForm({ ...statusForm, mechanicNotes: e.target.value })}
               rows={4}
             />
 
             <div className="flex space-x-4 pt-4">
-              <Button onClick={handleUpdate}>Perbarui Status</Button>
-              <Button variant="secondary" onClick={() => setSelectedJob(null)}>
+              <Button onClick={handleUpdateStatus}>Perbarui Status</Button>
+              <Button variant="secondary" onClick={() => setStatusJob(null)}>
                 Batal
               </Button>
             </div>

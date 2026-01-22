@@ -69,14 +69,27 @@ CREATE TABLE status_history (
   CONSTRAINT fk_status_history_user FOREIGN KEY (changed_by) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
+CREATE TABLE service_progress (
+  id CHAR(36) PRIMARY KEY,
+  service_request_id CHAR(36) NOT NULL,
+  progress_date DATE NOT NULL,
+  description TEXT NOT NULL,
+  created_by CHAR(36) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_service_progress_request FOREIGN KEY (service_request_id) REFERENCES service_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_service_progress_user FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE CASCADE
+);
+
 CREATE TABLE service_photos (
   id CHAR(36) PRIMARY KEY,
   service_request_id CHAR(36) NOT NULL,
+  service_progress_id CHAR(36),
   photo_url TEXT NOT NULL,
   description TEXT,
   uploaded_by CHAR(36) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_service_photos_request FOREIGN KEY (service_request_id) REFERENCES service_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_service_photos_progress FOREIGN KEY (service_progress_id) REFERENCES service_progress(id) ON DELETE SET NULL,
   CONSTRAINT fk_service_photos_user FOREIGN KEY (uploaded_by) REFERENCES profiles(id) ON DELETE CASCADE
 );
 

@@ -513,8 +513,17 @@ app.get("/service-requests", async (req, res) => {
       values.push(req.query.assigned_mechanic_id);
     }
     if (req.query.status) {
-      filters.push("status = ?");
-      values.push(req.query.status);
+      const statusValues = String(req.query.status)
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
+      if (statusValues.length > 1) {
+        filters.push(`status IN (${statusValues.map(() => "?").join(", ")})`);
+        values.push(...statusValues);
+      } else if (statusValues.length === 1) {
+        filters.push("status = ?");
+        values.push(statusValues[0]);
+      }
     }
     const whereClause = filters.length ? ` WHERE ${filters.join(" AND ")}` : "";
     const orderClause = buildOrderClause(req.query.order, ["created_at", "status"]);
@@ -647,6 +656,75 @@ app.post("/status-history", async (req, res) => {
       [id, service_request_id, status, notes || null, changed_by]
     );
     const [rows] = await pool.query("SELECT * FROM status_history WHERE id = ?", [id]);
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.get("/service-progress", async (req, res) => {
+  try {
+    const pool = getPool();
+    const filters = [];
+    const values = [];
+    if (req.query.service_request_id) {
+      filters.push("service_request_id = ?");
+      values.push(req.query.service_request_id);
+    }
+    const whereClause = filters.length ? ` WHERE ${filters.join(" AND ")}` : "";
+    const orderClause = buildOrderClause(req.query.order, ["created_at", "progress_date"]);
+    const [rows] = await pool.query(`SELECT * FROM service_progress${whereClause}${orderClause}`, values);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post("/service-progress", async (req, res) => {
+  const { service_request_id, progress_date, description, created_by } = req.body ?? {};
+  if (!service_request_id || !progress_date || !description || !created_by) {
+    return res.status(400).json({
+      message: "service_request_id, progress_date, description, dan created_by wajib diisi",
+    });
+  }
+  try {
+    const pool = getPool();
+    const id = crypto.randomUUID();
+    await pool.query(
+      "INSERT INTO service_progress (id, service_request_id, progress_date, description, created_by) VALUES (?, ?, ?, ?, ?)",
+      [id, service_request_id, progress_date, description, created_by]
+    );
+    const [rows] = await pool.query("SELECT * FROM service_progress WHERE id = ?", [id]);
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post("/service-photos", async (req, res) => {
+  const { service_request_id, service_progress_id, photo_url, description, uploaded_by } = req.body ?? {};
+  if (!service_request_id || !photo_url || !uploaded_by) {
+    return res.status(400).json({
+      message: "service_request_id, photo_url, dan uploaded_by wajib diisi",
+    });
+  }
+  try {
+    const pool = getPool();
+    const id = crypto.randomUUID();
+    await pool.query(
+      `INSERT INTO service_photos
+        (id, service_request_id, service_progress_id, photo_url, description, uploaded_by)
+        VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        service_request_id,
+        service_progress_id || null,
+        photo_url,
+        description || null,
+        uploaded_by,
+      ]
+    );
+    const [rows] = await pool.query("SELECT * FROM service_photos WHERE id = ?", [id]);
     res.status(201).json(rows[0]);
   } catch (error) {
     res.status(500).json({ message: error.message });

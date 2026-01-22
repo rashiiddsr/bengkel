@@ -6,7 +6,7 @@ import { Input } from '../../components/ui/Input';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, Search } from 'lucide-react';
-import { formatCurrency, formatDate, formatDateTime } from '../../lib/format';
+import { formatCurrency, formatDate, formatDateTime, formatStatus } from '../../lib/format';
 
 const REFRESH_INTERVAL = 30000;
 
@@ -31,7 +31,7 @@ export function CompletedJobs() {
 
     const data = await api.listServiceRequests({
       assigned_mechanic_id: user.id,
-      status: 'completed',
+      status: 'awaiting_payment,completed',
       include: 'vehicle,customer',
       order: 'updated_at.desc',
     });
@@ -49,9 +49,17 @@ export function CompletedJobs() {
     if (!normalizedSearch) return true;
     const vehicleLabel = `${job.vehicle?.make ?? ''} ${job.vehicle?.model ?? ''} ${job.vehicle?.license_plate ?? ''}`;
     const customerLabel = job.customer?.full_name ?? '';
-    const target = `${job.service_type} ${vehicleLabel} ${customerLabel}`.toLowerCase();
+    const target = `${job.service_type} ${vehicleLabel} ${customerLabel} ${job.status}`.toLowerCase();
     return target.includes(normalizedSearch);
   });
+
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      awaiting_payment: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+      completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  };
 
   return (
     <div>
@@ -162,8 +170,8 @@ export function CompletedJobs() {
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                  SELESAI
+                <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(selectedJob.status)}`}>
+                  {formatStatus(selectedJob.status)}
                 </span>
               </div>
               <div>
