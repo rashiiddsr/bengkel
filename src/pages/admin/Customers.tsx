@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Card, CardBody } from '../../components/ui/Card';
-import { Input } from '../../components/ui/Input';
+import { Input, TextArea } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { api, type ServiceRequestWithRelations, type UserProfile } from '../../lib/api';
 import type { Vehicle } from '../../lib/database.types';
-import { Search, Users } from 'lucide-react';
+import { Eye, Pencil, Search, Users } from 'lucide-react';
 
 export function Customers() {
   const [customers, setCustomers] = useState<UserProfile[]>([]);
@@ -86,7 +86,7 @@ export function Customers() {
     try {
       await api.updateProfile(editingCustomer.id, {
         full_name: editForm.fullName,
-        phone: editForm.phone || null,
+        phone: editForm.phone,
         address: editForm.address || null,
       });
 
@@ -166,9 +166,6 @@ export function Customers() {
                       Telepon
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Alamat
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                       Aksi
                     </th>
                   </tr>
@@ -196,24 +193,40 @@ export function Customers() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {customer.phone || '-'}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        {customer.address || '-'}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        <div className="flex flex-wrap gap-2">
-                          <Button variant="secondary" size="sm" onClick={() => handleDetail(customer)}>
-                            Detail
-                          </Button>
-                          <Button variant="primary" size="sm" onClick={() => handleEdit(customer)}>
-                            Edit
-                          </Button>
-                          <Button
-                            variant={customer.is_active ? 'danger' : 'success'}
-                            size="sm"
-                            onClick={() => handleToggleActive(customer)}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDetail(customer)}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500/40 dark:hover:bg-blue-500/10"
+                            aria-label="Lihat detail pelanggan"
                           >
-                            {customer.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-                          </Button>
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(customer)}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-500/40 dark:hover:bg-blue-500/10"
+                            aria-label="Edit pelanggan"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleActive(customer)}
+                            role="switch"
+                            aria-checked={customer.is_active}
+                            aria-label={customer.is_active ? 'Nonaktifkan pelanggan' : 'Aktifkan pelanggan'}
+                            className={`relative inline-flex h-6 w-12 items-center rounded-full transition ${
+                              customer.is_active ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
+                                customer.is_active ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -361,13 +374,21 @@ export function Customers() {
       >
         <form onSubmit={handleEditSubmit} className="space-y-4">
           <Input
-            label="Nama Lengkap"
+            label={(
+              <>
+                Nama Lengkap <span className="text-red-500">*</span>
+              </>
+            )}
             value={editForm.fullName}
             onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
             required
           />
           <Input
-            label="Email"
+            label={(
+              <>
+                Email <span className="text-red-500">*</span>
+              </>
+            )}
             type="email"
             value={editForm.email}
             onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
@@ -380,11 +401,16 @@ export function Customers() {
             onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
           />
           <Input
-            label="Telepon"
+            label={(
+              <>
+                Telepon <span className="text-red-500">*</span>
+              </>
+            )}
             value={editForm.phone}
             onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+            required
           />
-          <Input
+          <TextArea
             label="Alamat"
             value={editForm.address}
             onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}

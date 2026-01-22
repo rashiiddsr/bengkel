@@ -41,7 +41,7 @@ export function Header({ isSidebarOpen, onMenuClick }: HeaderProps) {
   }, []);
 
   return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 lg:px-6">
+    <header className="relative z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 lg:px-6">
       <button
         onClick={onMenuClick}
         aria-label={isSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
@@ -78,7 +78,7 @@ export function Header({ isSidebarOpen, onMenuClick }: HeaderProps) {
           </button>
 
           {isMenuOpen ? (
-            <div className="absolute right-0 mt-3 w-72 rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+            <div className="absolute right-0 z-50 mt-3 w-72 rounded-xl border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
               <div className="border-b border-gray-100 px-4 py-3 dark:border-gray-700">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{displayName}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{roleLabel}</p>
