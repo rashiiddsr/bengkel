@@ -23,8 +23,27 @@ const apiFetch = async <T>(path: string, options: RequestInit = {}) => {
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || 'Permintaan gagal');
+    const contentType = response.headers.get('content-type') ?? '';
+    let message = 'Permintaan gagal';
+    if (contentType.includes('application/json')) {
+      try {
+        const data = await response.json();
+        message = data?.message ?? JSON.stringify(data);
+      } catch (error) {
+        message = (error as Error).message || message;
+      }
+    } else {
+      const text = await response.text();
+      if (text) {
+        try {
+          const parsed = JSON.parse(text);
+          message = parsed?.message ?? text;
+        } catch {
+          message = text;
+        }
+      }
+    }
+    throw new Error(message);
   }
 
   if (response.status === 204) {
@@ -67,6 +86,7 @@ export const api = {
     model: string;
     year: number;
     license_plate: string;
+    photo_url?: string | null;
   }) =>
     apiFetch<Vehicle>('/vehicles', {
       method: 'POST',

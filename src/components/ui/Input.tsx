@@ -1,7 +1,7 @@
-import { InputHTMLAttributes } from 'react';
+import { InputHTMLAttributes, ReactNode } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+  label?: ReactNode;
   error?: string;
 }
 
@@ -37,7 +37,7 @@ export function Input({ label, error, className = '', ...props }: InputProps) {
 }
 
 interface TextAreaProps extends InputHTMLAttributes<HTMLTextAreaElement> {
-  label?: string;
+  label?: ReactNode;
   error?: string;
   rows?: number;
 }
@@ -75,7 +75,7 @@ export function TextArea({ label, error, rows = 4, className = '', ...props }: T
 }
 
 interface SelectProps extends InputHTMLAttributes<HTMLSelectElement> {
-  label?: string;
+  label?: ReactNode;
   error?: string;
   options: { value: string; label: string }[];
 }

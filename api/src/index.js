@@ -265,7 +265,7 @@ app.get("/vehicles", async (req, res) => {
 });
 
 app.post("/vehicles", async (req, res) => {
-  const { customer_id, make, model, year, license_plate } = req.body ?? {};
+  const { customer_id, make, model, year, license_plate, photo_url } = req.body ?? {};
   if (!customer_id || !make || !model || !year || !license_plate) {
     return res
       .status(400)
@@ -275,8 +275,8 @@ app.post("/vehicles", async (req, res) => {
     const pool = getPool();
     const id = crypto.randomUUID();
     await pool.query(
-      "INSERT INTO vehicles (id, customer_id, make, model, year, license_plate) VALUES (?, ?, ?, ?, ?, ?)",
-      [id, customer_id, make, model, year, license_plate]
+      "INSERT INTO vehicles (id, customer_id, make, model, year, license_plate, photo_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [id, customer_id, make, model, year, license_plate, photo_url ?? null]
     );
     const [rows] = await pool.query("SELECT * FROM vehicles WHERE id = ?", [id]);
     res.status(201).json(rows[0]);
@@ -309,6 +309,15 @@ app.patch("/vehicles/:vehicleId", async (req, res) => {
 app.delete("/vehicles/:vehicleId", async (req, res) => {
   try {
     const pool = getPool();
+    const [serviceRows] = await pool.query(
+      "SELECT id FROM service_requests WHERE vehicle_id = ? LIMIT 1",
+      [req.params.vehicleId]
+    );
+    if (serviceRows.length > 0) {
+      return res
+        .status(409)
+        .json({ message: "Kendaraan tidak bisa dihapus karena sudah memiliki riwayat servis." });
+    }
     await pool.query("DELETE FROM vehicles WHERE id = ?", [req.params.vehicleId]);
     res.status(204).send();
   } catch (error) {
