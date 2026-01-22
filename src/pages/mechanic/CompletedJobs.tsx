@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye } from 'lucide-react';
@@ -12,6 +13,7 @@ export function CompletedJobs() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchJobs();
@@ -35,6 +37,15 @@ export function CompletedJobs() {
     setSelectedJob(job);
   };
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredJobs = jobs.filter((job) => {
+    if (!normalizedSearch) return true;
+    const vehicleLabel = `${job.vehicle?.make ?? ''} ${job.vehicle?.model ?? ''} ${job.vehicle?.license_plate ?? ''}`;
+    const customerLabel = job.customer?.full_name ?? '';
+    const target = `${job.service_type} ${vehicleLabel} ${customerLabel}`.toLowerCase();
+    return target.includes(normalizedSearch);
+  });
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
@@ -43,11 +54,22 @@ export function CompletedJobs() {
 
       <Card>
         <CardBody>
+          <div className="mb-4 max-w-md">
+            <Input
+              placeholder="Cari pekerjaan selesai..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : jobs.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
               Belum ada pekerjaan selesai
+            </p>
+          ) : filteredJobs.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+              Tidak ada pekerjaan yang cocok dengan pencarian
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -75,7 +97,7 @@ export function CompletedJobs() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {jobs.map((job) => (
+                  {filteredJobs.map((job) => (
                     <tr key={job.id}>
                       <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-white">
                         {job.service_type}
@@ -97,6 +119,8 @@ export function CompletedJobs() {
                           size="sm"
                           variant="secondary"
                           onClick={() => handleView(job)}
+                          title="Lihat Detail"
+                          aria-label="Lihat Detail"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>

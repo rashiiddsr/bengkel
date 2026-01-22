@@ -46,6 +46,7 @@ export type Database = {
           model: string
           year: number
           license_plate: string
+          photo_url: string | null
           created_at: string
         }
         Insert: {
@@ -55,6 +56,7 @@ export type Database = {
           model: string
           year: number
           license_plate: string
+          photo_url?: string | null
           created_at?: string
         }
         Update: {
@@ -64,6 +66,7 @@ export type Database = {
           model?: string
           year?: number
           license_plate?: string
+          photo_url?: string | null
           created_at?: string
         }
       }

@@ -242,6 +242,7 @@ app.get("/vehicles", async (req, res) => {
         model: row.model,
         year: row.year,
         license_plate: row.license_plate,
+        photo_url: row.photo_url,
         created_at: row.created_at,
         customer: row.customer_full_name
           ? {
@@ -286,7 +287,7 @@ app.post("/vehicles", async (req, res) => {
 
 app.patch("/vehicles/:vehicleId", async (req, res) => {
   const updates = req.body ?? {};
-  const allowed = ["make", "model", "year", "license_plate"];
+  const allowed = ["make", "model", "year", "license_plate", "photo_url"];
   const fields = Object.keys(updates).filter((field) => allowed.includes(field));
   if (fields.length === 0) {
     return res.status(400).json({ message: "Tidak ada field yang valid untuk diperbarui" });

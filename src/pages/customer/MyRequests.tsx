@@ -37,6 +37,7 @@ export function MyRequests() {
   const [requests, setRequests] = useState<RequestWithDetails[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<RequestWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showNewVehicle, setShowNewVehicle] = useState(false);
@@ -192,6 +193,14 @@ export function MyRequests() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredRequests = requests.filter((request) => {
+    if (!normalizedSearch) return true;
+    const vehicleLabel = `${request.vehicle?.make ?? ''} ${request.vehicle?.model ?? ''} ${request.vehicle?.license_plate ?? ''}`;
+    const target = `${request.service_type} ${vehicleLabel} ${request.status}`.toLowerCase();
+    return target.includes(normalizedSearch);
+  });
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -206,6 +215,13 @@ export function MyRequests() {
 
       <Card>
         <CardBody>
+          <div className="mb-4 max-w-md">
+            <Input
+              placeholder="Cari permintaan servis..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
               Memuat...
@@ -213,6 +229,10 @@ export function MyRequests() {
           ) : requests.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
               Tidak ada permintaan servis
+            </p>
+          ) : filteredRequests.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+              Tidak ada permintaan yang cocok dengan pencarian
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -237,7 +257,7 @@ export function MyRequests() {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {requests.map((request) => (
+                  {filteredRequests.map((request) => (
                     <tr key={request.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                         {request.service_type}
@@ -258,9 +278,10 @@ export function MyRequests() {
                           size="sm"
                           variant="secondary"
                           onClick={() => handleViewDetails(request)}
+                          title="Lihat Detail"
+                          aria-label="Lihat Detail"
                         >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Lihat
+                          <Eye className="h-4 w-4" />
                         </Button>
                       </td>
                     </tr>
