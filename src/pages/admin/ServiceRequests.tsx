@@ -116,7 +116,7 @@ export function ServiceRequests() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Kelola Permintaan Servis
+        Daftar Servis
       </h1>
 
       <div className="mb-4 flex flex-col gap-3">

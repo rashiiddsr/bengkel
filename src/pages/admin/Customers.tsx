@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Card, CardBody } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
-import { api } from '../../lib/api';
-import type { Profile } from '../../lib/database.types';
+import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
+import { api, type ServiceRequestWithRelations } from '../../lib/api';
+import type { Profile, Vehicle } from '../../lib/database.types';
 import { Search, Users } from 'lucide-react';
 
 export function Customers() {
   const [customers, setCustomers] = useState<Profile[]>([]);
-  const [customerStats, setCustomerStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Profile | null>(null);
+  const [detailRequests, setDetailRequests] = useState<ServiceRequestWithRelations[]>([]);
+  const [detailVehicles, setDetailVehicles] = useState<Vehicle[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
@@ -20,23 +25,26 @@ export function Customers() {
 
     if (customersData) {
       setCustomers(customersData);
-
-      const stats: Record<string, any> = {};
-      for (const customer of customersData) {
-        const [requestsRes, vehiclesRes] = await Promise.all([
-          api.listServiceRequests({ customer_id: customer.id }),
-          api.listVehicles({ customer_id: customer.id }),
-        ]);
-
-        stats[customer.id] = {
-          totalRequests: requestsRes.length || 0,
-          totalVehicles: vehiclesRes.length || 0,
-        };
-      }
-      setCustomerStats(stats);
     }
 
     setLoading(false);
+  };
+
+  const handleDetail = async (customer: Profile) => {
+    setSelectedCustomer(customer);
+    setDetailLoading(true);
+    setDetailRequests([]);
+    setDetailVehicles([]);
+    try {
+      const [requestsRes, vehiclesRes] = await Promise.all([
+        api.listServiceRequests({ customer_id: customer.id, include: 'vehicle', order: 'created_at.desc' }),
+        api.listVehicles({ customer_id: customer.id, order: 'created_at.desc' }),
+      ]);
+      setDetailRequests(requestsRes ?? []);
+      setDetailVehicles(vehiclesRes ?? []);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -49,7 +57,7 @@ export function Customers() {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Kelola Pelanggan
+        Daftar Pelanggan
       </h1>
 
       <Card>
@@ -88,10 +96,7 @@ export function Customers() {
                       Alamat
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Kendaraan
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Total Permintaan
+                      Aksi
                     </th>
                   </tr>
                 </thead>
@@ -118,11 +123,10 @@ export function Customers() {
                       <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                         {customer.address || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {customerStats[customer.id]?.totalVehicles || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {customerStats[customer.id]?.totalRequests || 0}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <Button variant="secondary" size="sm" onClick={() => handleDetail(customer)}>
+                          Detail
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -132,6 +136,125 @@ export function Customers() {
           )}
         </CardBody>
       </Card>
+
+      <Modal
+        isOpen={!!selectedCustomer}
+        onClose={() => setSelectedCustomer(null)}
+        title="Detail Pelanggan"
+        size="lg"
+      >
+        {selectedCustomer && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Informasi Pelanggan
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Nama</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.full_name}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Telepon</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.phone || '-'}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-gray-500 dark:text-gray-400">Alamat</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.address || '-'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Detail Permintaan Servis
+              </h3>
+              {detailLoading ? (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-4">Memuat...</p>
+              ) : detailRequests.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400">Belum ada permintaan servis.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                          Servis
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                          Kendaraan
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                          Status
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                          Tanggal
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {detailRequests.map((request) => (
+                        <tr key={request.id}>
+                          <td className="px-4 py-2 text-gray-900 dark:text-white">{request.service_type}</td>
+                          <td className="px-4 py-2 text-gray-500 dark:text-gray-400">
+                            {request.vehicle
+                              ? `${request.vehicle.make} ${request.vehicle.model} (${request.vehicle.license_plate})`
+                              : '-'}
+                          </td>
+                          <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{request.status}</td>
+                          <td className="px-4 py-2 text-gray-500 dark:text-gray-400">
+                            {request.preferred_date || '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Detail Kendaraan
+              </h3>
+              {detailLoading ? (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-4">Memuat...</p>
+              ) : detailVehicles.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400">Belum ada kendaraan.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                          Kendaraan
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                          Tahun
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                          Nomor Polisi
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {detailVehicles.map((vehicle) => (
+                        <tr key={vehicle.id}>
+                          <td className="px-4 py-2 text-gray-900 dark:text-white">
+                            {vehicle.make} {vehicle.model}
+                          </td>
+                          <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{vehicle.year}</td>
+                          <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{vehicle.license_plate}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

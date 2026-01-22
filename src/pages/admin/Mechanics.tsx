@@ -1,13 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Card, CardBody } from '../../components/ui/Card';
+import { Input, TextArea } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
 import { api } from '../../lib/api';
 import type { Profile } from '../../lib/database.types';
-import { Wrench } from 'lucide-react';
+import { Edit, Plus, Search, Wrench } from 'lucide-react';
 
 export function Mechanics() {
   const [mechanics, setMechanics] = useState<Profile[]>([]);
   const [mechanicStats, setMechanicStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedMechanic, setSelectedMechanic] = useState<Profile | null>(null);
+  const [formState, setFormState] = useState({
+    fullName: '',
+    phone: '',
+    address: '',
+    email: '',
+    password: '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     fetchMechanics();
@@ -35,65 +51,234 @@ export function Mechanics() {
     setLoading(false);
   };
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredMechanics = mechanics.filter((mechanic) => {
+    if (!normalizedSearch) return true;
+    const target = `${mechanic.full_name} ${mechanic.phone ?? ''} ${mechanic.address ?? ''}`.toLowerCase();
+    return target.includes(normalizedSearch);
+  });
+
+  const handleAdd = () => {
+    setIsEditing(false);
+    setSelectedMechanic(null);
+    setFormState({
+      fullName: '',
+      phone: '',
+      address: '',
+      email: '',
+      password: '',
+    });
+    setFormError('');
+    setShowModal(true);
+  };
+
+  const handleEdit = (mechanic: Profile) => {
+    setIsEditing(true);
+    setSelectedMechanic(mechanic);
+    setFormState({
+      fullName: mechanic.full_name ?? '',
+      phone: mechanic.phone ?? '',
+      address: mechanic.address ?? '',
+      email: '',
+      password: '',
+    });
+    setFormError('');
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setFormError('');
+
+    try {
+      if (isEditing && selectedMechanic) {
+        await api.updateProfile(selectedMechanic.id, {
+          full_name: formState.fullName,
+          phone: formState.phone || null,
+          address: formState.address || null,
+        });
+      } else {
+        await api.createMechanic({
+          full_name: formState.fullName,
+          email: formState.email,
+          password: formState.password,
+          phone: formState.phone || null,
+          address: formState.address || null,
+        });
+      }
+      setShowModal(false);
+      await fetchMechanics();
+    } catch (error) {
+      setFormError((error as Error).message || 'Gagal menyimpan mekanik.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Kelola Mekanik
+        Daftar Mekanik
       </h1>
 
-      {loading ? (
-        <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
-      ) : mechanics.length === 0 ? (
-        <Card>
-          <CardBody>
+      <Card>
+        <CardBody>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+            <div className="relative w-full md:max-w-sm">
+              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                placeholder="Cari mekanik..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button onClick={handleAdd} className="inline-flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Tambah Mekanik
+            </Button>
+          </div>
+          {loading ? (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
+          ) : mechanics.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Tidak ada mekanik</p>
+          ) : filteredMechanics.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              Tidak ada mekanik
+              Tidak ada mekanik yang cocok dengan pencarian
             </p>
-          </CardBody>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mechanics.map((mechanic) => (
-            <Card key={mechanic.id}>
-              <CardBody>
-                <div className="flex items-start space-x-4">
-                  <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                    <Wrench className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {mechanic.full_name}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {mechanic.phone || 'Tidak ada nomor'}
-                    </p>
-                    <div className="mt-3 space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Total Pekerjaan:</span>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {mechanicStats[mechanic.id]?.total || 0}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Sedang Dikerjakan:</span>
-                        <span className="font-medium text-blue-600 dark:text-blue-400">
-                          {mechanicStats[mechanic.id]?.inProgress || 0}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Selesai:</span>
-                        <span className="font-medium text-green-600 dark:text-green-400">
-                          {mechanicStats[mechanic.id]?.completed || 0}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      Nama
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      Telepon
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      Alamat
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      Total Pekerjaan
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      Sedang Dikerjakan
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      Selesai
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      Aksi
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredMechanics.map((mechanic) => (
+                    <tr key={mechanic.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                              <Wrench className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {mechanic.full_name}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {mechanic.phone || '-'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        {mechanic.address || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {mechanicStats[mechanic.id]?.total || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 dark:text-blue-400">
+                        {mechanicStats[mechanic.id]?.inProgress || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400">
+                        {mechanicStats[mechanic.id]?.completed || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <button
+                          onClick={() => handleEdit(mechanic)}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                          title="Edit Mekanik"
+                          aria-label="Edit Mekanik"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={isEditing ? 'Edit Mekanik' : 'Tambah Mekanik'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="Nama Lengkap"
+            value={formState.fullName}
+            onChange={(e) => setFormState({ ...formState, fullName: e.target.value })}
+            required
+          />
+          {!isEditing && (
+            <>
+              <Input
+                label="Email"
+                type="email"
+                value={formState.email}
+                onChange={(e) => setFormState({ ...formState, email: e.target.value })}
+                required
+              />
+              <Input
+                label="Password"
+                type="password"
+                value={formState.password}
+                onChange={(e) => setFormState({ ...formState, password: e.target.value })}
+                required
+              />
+            </>
+          )}
+          <Input
+            label="Telepon"
+            value={formState.phone}
+            onChange={(e) => setFormState({ ...formState, phone: e.target.value })}
+          />
+          <TextArea
+            label="Alamat"
+            value={formState.address}
+            onChange={(e) => setFormState({ ...formState, address: e.target.value })}
+          />
+          {formError && (
+            <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>
+          )}
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" type="button" onClick={() => setShowModal(false)}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Menyimpan...' : 'Simpan'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

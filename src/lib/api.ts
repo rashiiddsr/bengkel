@@ -79,6 +79,22 @@ export const api = {
     }),
   logout: () => apiFetch<void>('/auth/logout', { method: 'POST' }),
   listProfiles: (params?: QueryParams) => apiFetch<Profile[]>(`/profiles${buildQuery(params)}`),
+  updateProfile: (profileId: string, payload: Partial<Profile>) =>
+    apiFetch<Profile>(`/profiles/${profileId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+  createMechanic: (payload: {
+    email: string;
+    password: string;
+    full_name: string;
+    phone?: string | null;
+    address?: string | null;
+  }) =>
+    apiFetch<Profile>('/mechanics', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
   listVehicles: (params?: QueryParams) => apiFetch<Vehicle[]>(`/vehicles${buildQuery(params)}`),
   createVehicle: (payload: {
     customer_id: string;
