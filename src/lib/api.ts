@@ -59,6 +59,15 @@ export type AuthUser = {
   role: Profile['role'] | 'superadmin';
 };
 
+export type UserAccount = AuthUser & {
+  is_active: boolean;
+};
+
+export type UserProfile = Profile & {
+  email: string | null;
+  is_active: boolean;
+};
+
 export type ServiceRequestWithRelations = ServiceRequest & {
   customer?: Profile;
   mechanic?: Profile | null;
@@ -78,9 +87,14 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   logout: () => apiFetch<void>('/auth/logout', { method: 'POST' }),
-  listProfiles: (params?: QueryParams) => apiFetch<Profile[]>(`/profiles${buildQuery(params)}`),
+  listProfiles: (params?: QueryParams) => apiFetch<UserProfile[]>(`/profiles${buildQuery(params)}`),
   updateProfile: (profileId: string, payload: Partial<Profile>) =>
     apiFetch<Profile>(`/profiles/${profileId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+  updateUser: (userId: string, payload: { email?: string; password?: string; is_active?: boolean }) =>
+    apiFetch<UserAccount>(`/users/${userId}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),

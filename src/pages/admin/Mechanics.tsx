@@ -3,18 +3,18 @@ import { Card, CardBody } from '../../components/ui/Card';
 import { Input, TextArea } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
-import { api } from '../../lib/api';
-import type { Profile } from '../../lib/database.types';
-import { Edit, Plus, Search, Wrench } from 'lucide-react';
+import { api, type UserProfile } from '../../lib/api';
+import { Plus, Search, Wrench } from 'lucide-react';
 
 export function Mechanics() {
-  const [mechanics, setMechanics] = useState<Profile[]>([]);
+  const [mechanics, setMechanics] = useState<UserProfile[]>([]);
   const [mechanicStats, setMechanicStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedMechanic, setSelectedMechanic] = useState<Profile | null>(null);
+  const [selectedMechanic, setSelectedMechanic] = useState<UserProfile | null>(null);
+  const [detailMechanic, setDetailMechanic] = useState<UserProfile | null>(null);
   const [formState, setFormState] = useState({
     fullName: '',
     phone: '',
@@ -54,7 +54,7 @@ export function Mechanics() {
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredMechanics = mechanics.filter((mechanic) => {
     if (!normalizedSearch) return true;
-    const target = `${mechanic.full_name} ${mechanic.phone ?? ''} ${mechanic.address ?? ''}`.toLowerCase();
+    const target = `${mechanic.full_name} ${mechanic.email ?? ''} ${mechanic.phone ?? ''} ${mechanic.address ?? ''}`.toLowerCase();
     return target.includes(normalizedSearch);
   });
 
@@ -72,14 +72,14 @@ export function Mechanics() {
     setShowModal(true);
   };
 
-  const handleEdit = (mechanic: Profile) => {
+  const handleEdit = (mechanic: UserProfile) => {
     setIsEditing(true);
     setSelectedMechanic(mechanic);
     setFormState({
       fullName: mechanic.full_name ?? '',
       phone: mechanic.phone ?? '',
       address: mechanic.address ?? '',
-      email: '',
+      email: mechanic.email ?? '',
       password: '',
     });
     setFormError('');
@@ -98,6 +98,13 @@ export function Mechanics() {
           phone: formState.phone || null,
           address: formState.address || null,
         });
+        const userPayload: { email?: string; password?: string } = {
+          email: formState.email.trim(),
+        };
+        if (formState.password) {
+          userPayload.password = formState.password;
+        }
+        await api.updateUser(selectedMechanic.id, userPayload);
       } else {
         await api.createMechanic({
           full_name: formState.fullName,
@@ -113,6 +120,15 @@ export function Mechanics() {
       setFormError((error as Error).message || 'Gagal menyimpan mekanik.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleToggleActive = async (mechanic: UserProfile) => {
+    try {
+      await api.updateUser(mechanic.id, { is_active: !mechanic.is_active });
+      await fetchMechanics();
+    } catch (error) {
+      setFormError((error as Error).message || 'Gagal memperbarui status mekanik.');
     }
   };
 
@@ -156,12 +172,6 @@ export function Mechanics() {
                       Nama
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Telepon
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                      Alamat
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                       Total Pekerjaan
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
@@ -192,12 +202,6 @@ export function Mechanics() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {mechanic.phone || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        {mechanic.address || '-'}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {mechanicStats[mechanic.id]?.total || 0}
                       </td>
@@ -208,14 +212,21 @@ export function Mechanics() {
                         {mechanicStats[mechanic.id]?.completed || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        <button
-                          onClick={() => handleEdit(mechanic)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                          title="Edit Mekanik"
-                          aria-label="Edit Mekanik"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="secondary" size="sm" onClick={() => setDetailMechanic(mechanic)}>
+                            Detail
+                          </Button>
+                          <Button variant="primary" size="sm" onClick={() => handleEdit(mechanic)}>
+                            Edit
+                          </Button>
+                          <Button
+                            variant={mechanic.is_active ? 'danger' : 'success'}
+                            size="sm"
+                            onClick={() => handleToggleActive(mechanic)}
+                          >
+                            {mechanic.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -225,6 +236,65 @@ export function Mechanics() {
           )}
         </CardBody>
       </Card>
+
+      <Modal
+        isOpen={!!detailMechanic}
+        onClose={() => setDetailMechanic(null)}
+        title="Detail Mekanik"
+        size="lg"
+      >
+        {detailMechanic && (
+          <div className="space-y-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Nama</p>
+                <p className="font-medium text-gray-900 dark:text-white">{detailMechanic.full_name}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Email</p>
+                <p className="font-medium text-gray-900 dark:text-white">{detailMechanic.email || '-'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Telepon</p>
+                <p className="font-medium text-gray-900 dark:text-white">{detailMechanic.phone || '-'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Status</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {detailMechanic.is_active ? 'Aktif' : 'Nonaktif'}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <p className="text-gray-500 dark:text-gray-400">Alamat</p>
+                <p className="font-medium text-gray-900 dark:text-white">{detailMechanic.address || '-'}</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-gray-500 dark:text-gray-400 mb-2">Ringkasan Pekerjaan</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Pekerjaan</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {mechanicStats[detailMechanic.id]?.total || 0}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Sedang Dikerjakan</p>
+                  <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                    {mechanicStats[detailMechanic.id]?.inProgress || 0}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Selesai</p>
+                  <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                    {mechanicStats[detailMechanic.id]?.completed || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         isOpen={showModal}
@@ -238,24 +308,20 @@ export function Mechanics() {
             onChange={(e) => setFormState({ ...formState, fullName: e.target.value })}
             required
           />
-          {!isEditing && (
-            <>
-              <Input
-                label="Email"
-                type="email"
-                value={formState.email}
-                onChange={(e) => setFormState({ ...formState, email: e.target.value })}
-                required
-              />
-              <Input
-                label="Password"
-                type="password"
-                value={formState.password}
-                onChange={(e) => setFormState({ ...formState, password: e.target.value })}
-                required
-              />
-            </>
-          )}
+          <Input
+            label="Email"
+            type="email"
+            value={formState.email}
+            onChange={(e) => setFormState({ ...formState, email: e.target.value })}
+            required
+          />
+          <Input
+            label={isEditing ? 'Password Baru (opsional)' : 'Password'}
+            type="password"
+            value={formState.password}
+            onChange={(e) => setFormState({ ...formState, password: e.target.value })}
+            required={!isEditing}
+          />
           <Input
             label="Telepon"
             value={formState.phone}
