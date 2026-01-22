@@ -8,12 +8,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ClipboardList, Eye, Search, CheckCircle, Upload } from 'lucide-react';
 import { formatCurrency, formatDate, formatStatus } from '../../lib/format';
 import type { ServicePhoto, ServiceProgress } from '../../lib/database.types';
-import {
-  calculateMechanicNotesTotal,
-  parseMechanicNotes,
-  serializeMechanicNotes,
-  type MechanicNoteItem,
-} from '../../lib/mechanicNotes';
 
 const REFRESH_INTERVAL = 30000;
 
@@ -38,7 +32,7 @@ export function ServiceQueue() {
 
   const [statusForm, setStatusForm] = useState({
     status: 'awaiting_payment',
-    mechanicNotes: [] as { note: string; cost: string }[],
+    mechanicNotes: '',
   });
 
   useEffect(() => {
@@ -104,17 +98,10 @@ export function ServiceQueue() {
   };
 
   const handleOpenStatus = (job: any) => {
-    const parsedNotes = parseMechanicNotes(job.mechanic_notes);
     setStatusJob(job);
     setStatusForm({
       status: 'awaiting_payment',
-      mechanicNotes:
-        parsedNotes.length > 0
-          ? parsedNotes.map((item) => ({
-            note: item.note,
-            cost: item.cost !== null && item.cost !== undefined ? item.cost.toString() : '',
-          }))
-          : [{ note: '', cost: '' }],
+      mechanicNotes: job.mechanic_notes || '',
     });
   };
 
@@ -149,14 +136,7 @@ export function ServiceQueue() {
 
   const handleUpdateStatus = async () => {
     if (!statusJob || !user) return;
-    const preparedNotes: MechanicNoteItem[] = statusForm.mechanicNotes
-      .map((item) => ({
-        note: item.note.trim(),
-        cost: item.cost === '' ? null : Number(item.cost),
-      }))
-      .filter((item) => item.note || item.cost !== null);
-
-    if (preparedNotes.length === 0 || preparedNotes.some((item) => !item.note)) {
+    if (!statusForm.mechanicNotes.trim()) {
       window.alert('Catatan mekanik wajib diisi sebelum memperbarui status.');
       return;
     }
@@ -168,17 +148,12 @@ export function ServiceQueue() {
 
     await api.updateServiceRequest(statusJob.id, {
       status: statusForm.status,
-      mechanic_notes: serializeMechanicNotes(preparedNotes),
+      mechanic_notes: statusForm.mechanicNotes.trim(),
     });
-    const notesSummary = preparedNotes
-      .map((item, index) =>
-        `${index + 1}. ${item.note}${item.cost !== null && item.cost !== undefined ? ` (${formatCurrency(item.cost)})` : ''}`
-      )
-      .join(' ');
     await api.createStatusHistory({
       service_request_id: statusJob.id,
       status: statusForm.status,
-      notes: notesSummary,
+      notes: statusForm.mechanicNotes.trim(),
       changed_by: user.id,
     });
 
@@ -202,49 +177,6 @@ export function ServiceQueue() {
     const target = `${job.service_type} ${vehicleLabel} ${customerLabel} ${job.status}`.toLowerCase();
     return target.includes(normalizedSearch);
   });
-
-  const mechanicNotesTotal = calculateMechanicNotesTotal(
-    statusForm.mechanicNotes.map((item) => ({
-      note: item.note,
-      cost: item.cost === '' || Number.isNaN(Number(item.cost)) ? 0 : Number(item.cost),
-    }))
-  );
-
-  const handleAddMechanicNote = () => {
-    setStatusForm((prev) => ({
-      ...prev,
-      mechanicNotes: [...prev.mechanicNotes, { note: '', cost: '' }],
-    }));
-  };
-
-  const handleRemoveMechanicNote = (index: number) => {
-    setStatusForm((prev) => ({
-      ...prev,
-      mechanicNotes: prev.mechanicNotes.filter((_, noteIndex) => noteIndex !== index),
-    }));
-  };
-
-  const renderMechanicNotes = (rawNotes?: string | null) => {
-    const items = parseMechanicNotes(rawNotes);
-    if (items.length === 0) return null;
-
-    return (
-      <ol className="list-decimal space-y-1 pl-5 text-gray-900 dark:text-white">
-        {items.map((item, index) => (
-          <li key={`${item.note}-${index}`} className="flex items-start justify-between gap-4">
-            <span>{item.note}</span>
-            {item.cost !== null && item.cost !== undefined && (
-              <span className="text-sm text-gray-500 dark:text-gray-300">
-                {formatCurrency(item.cost)}
-              </span>
-            )}
-          </li>
-        ))}
-      </ol>
-    );
-  };
-
-  const mechanicNotesContent = renderMechanicNotes(detailJob?.mechanic_notes);
 
   return (
     <div>
@@ -405,10 +337,12 @@ export function ServiceQueue() {
               </div>
             )}
 
-            {mechanicNotesContent && (
+            {detailJob.mechanic_notes && (
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Catatan Mekanik</p>
-                {mechanicNotesContent}
+                <p className="text-gray-900 dark:text-white">
+                  {detailJob.mechanic_notes}
+                </p>
               </div>
             )}
 
@@ -590,65 +524,17 @@ export function ServiceQueue() {
               onChange={(e) => setStatusForm({ ...statusForm, status: e.target.value })}
             />
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+            <TextArea
+              label={
+                <span>
                   Catatan Mekanik <span className="text-red-500">*</span>
-                </p>
-                <Button variant="secondary" onClick={handleAddMechanicNote}>
-                  Tambah Catatan
-                </Button>
-              </div>
-              <div className="space-y-3">
-                {statusForm.mechanicNotes.map((item, index) => (
-                  <div key={`mechanic-note-${index}`} className="rounded-lg border border-dashed border-gray-200 p-3 dark:border-gray-700">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-end">
-                      <Input
-                        label={`Catatan ${index + 1}`}
-                        placeholder="Tambahkan catatan servis..."
-                        value={item.note}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setStatusForm((prev) => ({
-                            ...prev,
-                            mechanicNotes: prev.mechanicNotes.map((note, noteIndex) =>
-                              noteIndex === index ? { ...note, note: value } : note
-                            ),
-                          }));
-                        }}
-                      />
-                      <Input
-                        type="number"
-                        label="Harga"
-                        placeholder="0.00"
-                        value={item.cost}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setStatusForm((prev) => ({
-                            ...prev,
-                            mechanicNotes: prev.mechanicNotes.map((note, noteIndex) =>
-                              noteIndex === index ? { ...note, cost: value } : note
-                            ),
-                          }));
-                        }}
-                        step="0.01"
-                      />
-                      {statusForm.mechanicNotes.length > 1 && (
-                        <Button variant="secondary" onClick={() => handleRemoveMechanicNote(index)}>
-                          Hapus
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-700 dark:text-gray-200">
-                <p className="text-xs uppercase text-gray-400 dark:text-gray-500">Total Sementara</p>
-                <p className="text-base font-semibold text-gray-900 dark:text-white">
-                  {formatCurrency(mechanicNotesTotal)}
-                </p>
-              </div>
-            </div>
+                </span>
+              }
+              placeholder="Tambahkan catatan servis..."
+              value={statusForm.mechanicNotes}
+              onChange={(e) => setStatusForm({ ...statusForm, mechanicNotes: e.target.value })}
+              rows={4}
+            />
 
             <div className="flex space-x-4 pt-4">
               <Button onClick={handleUpdateStatus}>Perbarui Status</Button>
