@@ -6,7 +6,10 @@ interface AuthContextType {
   user: AuthUser | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (
+    email: string,
+    password: string
+  ) => Promise<{ error: Error | null; profile?: Profile | null }>;
   signUp: (email: string, password: string, fullName: string, phone: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -59,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const sessionData = await api.login(email, password);
       setUser(sessionData.user);
       setProfile(sessionData.profile);
-      return { error: null };
+      return { error: null, profile: sessionData.profile };
     } catch (error) {
       return { error: error as Error };
     }

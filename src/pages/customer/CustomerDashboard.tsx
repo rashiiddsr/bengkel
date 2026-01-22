@@ -38,9 +38,9 @@ export function CustomerDashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Dasbor
+          Beranda
         </h1>
-        <Link to="/customer/new-request">
+        <Link to="/customer/my-requests" state={{ openNewRequest: true }}>
           <Button>
             <Plus className="h-5 w-5 mr-2" />
             Permintaan Servis Baru
@@ -114,7 +114,7 @@ export function CustomerDashboard() {
               <p className="text-gray-500 dark:text-gray-400 mb-4">
                 Belum ada permintaan servis
               </p>
-              <Link to="/customer/new-request">
+              <Link to="/customer/my-requests" state={{ openNewRequest: true }}>
                 <Button>Buat Permintaan Pertama</Button>
               </Link>
             </div>
