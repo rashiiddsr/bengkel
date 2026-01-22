@@ -3,7 +3,7 @@ import { Card, CardHeader, CardBody, CardTitle } from '../../components/ui/Card'
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { api } from '../../lib/api';
+import { api, resolveImageUrl } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Vehicle } from '../../lib/database.types';
 import { Car, Eye, Pencil, Plus, Search, Trash2, Upload } from 'lucide-react';
@@ -49,19 +49,11 @@ export function MyVehicles() {
     setLoading(false);
   };
 
-  const fileToDataUrl = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error('Gagal membaca file gambar'));
-      reader.readAsDataURL(file);
-    });
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
-    const photoUrl = createPhotoFile ? await fileToDataUrl(createPhotoFile) : null;
+    const photoUrl = createPhotoFile ? await api.uploadImage(createPhotoFile) : null;
 
     await api.createVehicle({
       customer_id: user.id,
@@ -112,7 +104,7 @@ export function MyVehicles() {
     };
 
     if (editPhotoFile) {
-      updates.photo_url = await fileToDataUrl(editPhotoFile);
+      updates.photo_url = await api.uploadImage(editPhotoFile);
     }
 
     await api.updateVehicle(selectedVehicle.id, {
@@ -222,7 +214,7 @@ export function MyVehicles() {
                             <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center overflow-hidden">
                               {vehicle.photo_url ? (
                                 <img
-                                  src={vehicle.photo_url}
+                                  src={resolveImageUrl(vehicle.photo_url) ?? ''}
                                   alt={`${vehicle.make} ${vehicle.model}`}
                                   className="h-full w-full object-cover"
                                 />
@@ -390,7 +382,7 @@ export function MyVehicles() {
               <div className="h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center overflow-hidden">
                 {selectedVehicle.photo_url ? (
                   <img
-                    src={selectedVehicle.photo_url}
+                    src={resolveImageUrl(selectedVehicle.photo_url) ?? ''}
                     alt={`${selectedVehicle.make} ${selectedVehicle.model}`}
                     className="h-full w-full object-cover"
                   />

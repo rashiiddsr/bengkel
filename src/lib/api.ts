@@ -53,6 +53,41 @@ const apiFetch = async <T>(path: string, options: RequestInit = {}) => {
   return response.json() as Promise<T>;
 };
 
+const parseErrorMessage = async (response: Response) => {
+  const contentType = response.headers.get('content-type') ?? '';
+  if (contentType.includes('application/json')) {
+    try {
+      const data = await response.json();
+      return data?.message ?? JSON.stringify(data);
+    } catch (error) {
+      return (error as Error).message || 'Permintaan gagal';
+    }
+  }
+  const text = await response.text();
+  if (!text) return 'Permintaan gagal';
+  try {
+    const parsed = JSON.parse(text);
+    return parsed?.message ?? text;
+  } catch {
+    return text;
+  }
+};
+
+const uploadFile = async (path: string, formData: FormData) => {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    body: formData,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const message = await parseErrorMessage(response);
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<{ path: string }>;
+};
+
 export type AuthUser = {
   id: string;
   username: string;
@@ -172,4 +207,19 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  uploadImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const data = await uploadFile('/uploads', formData);
+    return data.path;
+  },
+};
+
+export const resolveImageUrl = (path?: string | null) => {
+  if (!path) return null;
+  if (path.startsWith('data:') || path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE_URL}${normalized}`;
 };

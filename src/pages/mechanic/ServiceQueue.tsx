@@ -8,6 +8,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Edit, Search } from 'lucide-react';
 import { formatCurrency, formatStatus } from '../../lib/format';
 
+const REFRESH_INTERVAL = 30000;
+
 export function ServiceQueue() {
   const { user } = useAuth();
   const [jobs, setJobs] = useState<any[]>([]);
@@ -22,7 +24,12 @@ export function ServiceQueue() {
   });
 
   useEffect(() => {
+    if (!user) return;
     fetchJobs();
+    const intervalId = window.setInterval(() => {
+      fetchJobs();
+    }, REFRESH_INTERVAL);
+    return () => window.clearInterval(intervalId);
   }, [user]);
 
   const fetchJobs = async () => {

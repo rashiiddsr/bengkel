@@ -3,7 +3,7 @@ import { Card, CardBody } from '../../components/ui/Card';
 import { Input, TextArea } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
-import { api, type ServiceRequestWithRelations, type UserProfile } from '../../lib/api';
+import { api, resolveImageUrl, type ServiceRequestWithRelations, type UserProfile } from '../../lib/api';
 import { formatDate, formatStatus } from '../../lib/format';
 import type { Vehicle } from '../../lib/database.types';
 import { Eye, Pencil, Search, Users } from 'lucide-react';
@@ -183,7 +183,7 @@ export function Customers() {
                             <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center overflow-hidden">
                               {customer.avatar_url ? (
                                 <img
-                                  src={customer.avatar_url}
+                                  src={resolveImageUrl(customer.avatar_url) ?? ''}
                                   alt={customer.full_name}
                                   className="h-full w-full object-cover"
                                 />

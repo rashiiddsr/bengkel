@@ -15,6 +15,8 @@ interface RequestWithDetails extends ServiceRequest {
   vehicle?: any;
 }
 
+const REFRESH_INTERVAL = 30000;
+
 export function ServiceRequests() {
   const { user } = useAuth();
   const [requests, setRequests] = useState<RequestWithDetails[]>([]);
@@ -37,6 +39,10 @@ export function ServiceRequests() {
 
   useEffect(() => {
     fetchData();
+    const intervalId = window.setInterval(() => {
+      fetchData();
+    }, REFRESH_INTERVAL);
+    return () => window.clearInterval(intervalId);
   }, []);
 
   const fetchData = async () => {

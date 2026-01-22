@@ -8,13 +8,20 @@ import { formatDate, formatStatus } from '../../lib/format';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ServiceRequest } from '../../lib/database.types';
 
+const REFRESH_INTERVAL = 30000;
+
 export function CustomerDashboard() {
   const { user } = useAuth();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
     fetchRequests();
+    const intervalId = window.setInterval(() => {
+      fetchRequests();
+    }, REFRESH_INTERVAL);
+    return () => window.clearInterval(intervalId);
   }, [user]);
 
   const fetchRequests = async () => {
