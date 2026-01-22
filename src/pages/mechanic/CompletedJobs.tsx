@@ -7,6 +7,7 @@ import { api, resolveImageUrl } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, Search } from 'lucide-react';
 import { formatCurrency, formatDate, formatDateTime, formatStatus } from '../../lib/format';
+import { parseMechanicNotes } from '../../lib/mechanicNotes';
 import type { ServicePhoto, ServiceProgress } from '../../lib/database.types';
 
 const REFRESH_INTERVAL = 30000;
@@ -85,6 +86,10 @@ export function CompletedJobs() {
     const target = `${job.service_type} ${vehicleLabel} ${customerLabel} ${job.status}`.toLowerCase();
     return target.includes(normalizedSearch);
   });
+
+  const mechanicNotesContent = selectedJob?.mechanic_notes
+    ? parseMechanicNotes(selectedJob.mechanic_notes)
+    : [];
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -233,12 +238,21 @@ export function CompletedJobs() {
               </div>
             )}
 
-            {selectedJob.mechanic_notes && (
+            {mechanicNotesContent.length > 0 && (
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Catatan Pekerjaan</p>
-                <p className="text-gray-900 dark:text-white">
-                  {selectedJob.mechanic_notes}
-                </p>
+                <ol className="list-decimal space-y-1 pl-5 text-gray-900 dark:text-white">
+                  {mechanicNotesContent.map((item, index) => (
+                    <li key={`${item.note}-${index}`} className="flex items-start justify-between gap-4">
+                      <span>{item.note}</span>
+                      {item.cost !== null && item.cost !== undefined && (
+                        <span className="text-sm text-gray-500 dark:text-gray-300">
+                          {formatCurrency(item.cost)}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
               </div>
             )}
 
