@@ -18,7 +18,7 @@ export function Login() {
     setError('');
     setLoading(true);
 
-    const { error: signInError } = await signIn(email, password);
+    const { error: signInError, profile } = await signIn(email, password);
 
     if (signInError) {
       setError(signInError.message);
@@ -26,7 +26,14 @@ export function Login() {
       return;
     }
 
-    navigate('/');
+    const role = profile?.role;
+    const redirectMap: Record<string, string> = {
+      admin: '/admin',
+      mechanic: '/mechanic',
+      customer: '/customer',
+      superadmin: '/admin',
+    };
+    navigate(redirectMap[role ?? ''] ?? '/');
   };
 
   return (

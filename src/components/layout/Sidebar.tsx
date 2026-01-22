@@ -41,7 +41,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const role = profile?.role ?? user?.role;
     if (role === 'admin') {
       return [
-        { to: '/admin', icon: LayoutDashboard, label: 'Dasbor' },
+        { to: '/admin', icon: LayoutDashboard, label: 'Beranda' },
         { to: '/admin/service-requests', icon: FileText, label: 'Permintaan Servis' },
         { to: '/admin/mechanics', icon: Wrench, label: 'Mekanik' },
         { to: '/admin/customers', icon: Users, label: 'Pelanggan' },
@@ -49,14 +49,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       ];
     } else if (role === 'mechanic') {
       return [
-        { to: '/mechanic', icon: LayoutDashboard, label: 'Dasbor' },
+        { to: '/mechanic', icon: LayoutDashboard, label: 'Beranda' },
         { to: '/mechanic/queue', icon: FileText, label: 'Antrian Servis' },
         { to: '/mechanic/completed', icon: FileText, label: 'Pekerjaan Selesai' },
       ];
     } else {
       return [
-        { to: '/customer', icon: LayoutDashboard, label: 'Dasbor' },
-        { to: '/customer/new-request', icon: FileText, label: 'Permintaan Servis Baru' },
+        { to: '/customer', icon: LayoutDashboard, label: 'Beranda' },
         { to: '/customer/my-requests', icon: FileText, label: 'Permintaan Saya' },
         { to: '/customer/vehicles', icon: Car, label: 'Kendaraan Saya' },
       ];
