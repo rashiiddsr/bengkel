@@ -100,7 +100,7 @@ export type AuthUser = {
   id: string;
   username: string;
   email: string;
-  role: Profile['role'] | 'superadmin';
+  role: Profile['role'];
 };
 
 export type UserAccount = AuthUser & {
@@ -117,6 +117,19 @@ export type ServiceRequestWithRelations = ServiceRequest & {
   customer?: Profile;
   mechanic?: Profile | null;
   vehicle?: Vehicle | null;
+};
+
+export type Notification = {
+  id: string;
+  recipient_id: string;
+  actor_id: string | null;
+  type: string;
+  title: string;
+  message: string | null;
+  entity_type: string | null;
+  entity_id: string | null;
+  is_read: boolean;
+  created_at: string;
 };
 
 export const api = {
@@ -257,6 +270,17 @@ export const api = {
     const data = await uploadFile('/uploads', formData);
     return data.path;
   },
+  listNotifications: (params?: QueryParams) => apiFetch<Notification[]>(`/notifications${buildQuery(params)}`),
+  markNotificationRead: (notificationId: string) =>
+    apiFetch<Notification>(`/notifications/${notificationId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_read: true }),
+    }),
+  markAllNotificationsRead: (recipientId: string) =>
+    apiFetch<{ updated: number }>(`/notifications/mark-all-read`, {
+      method: 'POST',
+      body: JSON.stringify({ recipient_id: recipientId }),
+    }),
 };
 
 export const resolveImageUrl = (path?: string | null) => {

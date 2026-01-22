@@ -13,7 +13,7 @@ export type Database = {
         Row: {
           id: string
           full_name: string
-          role: 'superadmin' | 'admin' | 'mechanic' | 'customer'
+          role: 'admin' | 'mechanic' | 'customer'
           phone: string | null
           address: string | null
           avatar_url: string | null
@@ -23,7 +23,7 @@ export type Database = {
         Insert: {
           id: string
           full_name: string
-          role: 'superadmin' | 'admin' | 'mechanic' | 'customer'
+          role: 'admin' | 'mechanic' | 'customer'
           phone?: string | null
           address?: string | null
           avatar_url?: string | null
@@ -33,7 +33,7 @@ export type Database = {
         Update: {
           id?: string
           full_name?: string
-          role?: 'superadmin' | 'admin' | 'mechanic' | 'customer'
+          role?: 'admin' | 'mechanic' | 'customer'
           phone?: string | null
           address?: string | null
           avatar_url?: string | null
@@ -233,6 +233,44 @@ export type Database = {
           photo_url?: string
           description?: string | null
           uploaded_by?: string
+          created_at?: string
+        }
+      }
+      notifications: {
+        Row: {
+          id: string
+          recipient_id: string
+          actor_id: string | null
+          type: string
+          title: string
+          message: string | null
+          entity_type: string | null
+          entity_id: string | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recipient_id: string
+          actor_id?: string | null
+          type: string
+          title: string
+          message?: string | null
+          entity_type?: string | null
+          entity_id?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          recipient_id?: string
+          actor_id?: string | null
+          type?: string
+          title?: string
+          message?: string | null
+          entity_type?: string | null
+          entity_id?: string | null
+          is_read?: boolean
           created_at?: string
         }
       }

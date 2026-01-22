@@ -122,6 +122,44 @@ const normalizeIncludes = (includeParam) => {
   );
 };
 
+const getActiveUserIdsByRole = async (pool, role) => {
+  const [rows] = await pool.query(
+    `SELECT profiles.id
+     FROM profiles
+     INNER JOIN users ON users.id = profiles.id
+     WHERE profiles.role = ? AND users.is_active = 1`,
+    [role]
+  );
+  return rows.map((row) => row.id);
+};
+
+const getProfileName = async (pool, profileId) => {
+  if (!profileId) return null;
+  const [rows] = await pool.query("SELECT full_name FROM profiles WHERE id = ?", [profileId]);
+  return rows[0]?.full_name ?? null;
+};
+
+const createNotification = async (
+  pool,
+  { recipientId, actorId, type, title, message, entityType, entityId }
+) => {
+  if (!recipientId) return;
+  if (actorId && actorId === recipientId) return;
+  const id = crypto.randomUUID();
+  await pool.query(
+    `INSERT INTO notifications
+      (id, recipient_id, actor_id, type, title, message, entity_type, entity_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, recipientId, actorId ?? null, type, title, message ?? null, entityType ?? null, entityId ?? null]
+  );
+};
+
+const createNotifications = async (pool, recipients, payload) => {
+  await Promise.all(
+    recipients.map((recipientId) => createNotification(pool, { ...payload, recipientId }))
+  );
+};
+
 app.get("/health", async (_req, res) => {
   try {
     const pool = getPool();
@@ -677,7 +715,18 @@ app.post("/service-requests", async (req, res) => {
     );
 
     const [rows] = await pool.query("SELECT * FROM service_requests WHERE id = ?", [id]);
-    res.status(201).json(rows[0]);
+    const createdRequest = rows[0];
+    const customerName = await getProfileName(pool, customer_id);
+    const adminIds = await getActiveUserIdsByRole(pool, "admin");
+    await createNotifications(pool, adminIds, {
+      actorId: customer_id,
+      type: "service_request_created",
+      title: "Permintaan servis baru",
+      message: `Permintaan ${service_type} dari ${customerName ?? "pelanggan"}.`,
+      entityType: "service_request",
+      entityId: id,
+    });
+    res.status(201).json(createdRequest);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -704,12 +753,59 @@ app.patch("/service-requests/:requestId", async (req, res) => {
 
   try {
     const pool = getPool();
+    const [currentRows] = await pool.query("SELECT * FROM service_requests WHERE id = ?", [
+      req.params.requestId,
+    ]);
+    const previous = currentRows[0];
+    if (!previous) {
+      return res.status(404).json({ message: "Permintaan servis tidak ditemukan" });
+    }
     const setClause = fields.map((field) => `${field} = ?`).join(", ");
     const values = fields.map((field) => updates[field]);
     values.push(req.params.requestId);
     await pool.query(`UPDATE service_requests SET ${setClause} WHERE id = ?`, values);
     const [rows] = await pool.query("SELECT * FROM service_requests WHERE id = ?", [req.params.requestId]);
-    res.json(rows[0] ?? null);
+    const updated = rows[0] ?? null;
+    if (updated) {
+      const recipients = new Set();
+      if (updated.customer_id) recipients.add(updated.customer_id);
+      if (updated.assigned_mechanic_id) recipients.add(updated.assigned_mechanic_id);
+      const customerName = await getProfileName(pool, updated.customer_id);
+      const mechanicName = await getProfileName(pool, updated.assigned_mechanic_id);
+
+      if (previous.status !== updated.status) {
+        await createNotifications(pool, Array.from(recipients), {
+          actorId: updates.updated_by ?? null,
+          type: "service_status_updated",
+          title: "Status servis diperbarui",
+          message: `Status servis ${updated.service_type} kini ${updated.status}.`,
+          entityType: "service_request",
+          entityId: updated.id,
+        });
+      }
+
+      if (previous.assigned_mechanic_id !== updated.assigned_mechanic_id && updated.assigned_mechanic_id) {
+        await createNotification(pool, {
+          recipientId: updated.assigned_mechanic_id,
+          actorId: updates.updated_by ?? null,
+          type: "service_assigned",
+          title: "Penugasan servis baru",
+          message: `Anda ditugaskan untuk servis ${updated.service_type} (${customerName ?? "pelanggan"}).`,
+          entityType: "service_request",
+          entityId: updated.id,
+        });
+        await createNotification(pool, {
+          recipientId: updated.customer_id,
+          actorId: updates.updated_by ?? null,
+          type: "service_assigned_customer",
+          title: "Teknisi ditugaskan",
+          message: `Servis Anda ditangani ${mechanicName ?? "mekanik"}.`,
+          entityType: "service_request",
+          entityId: updated.id,
+        });
+      }
+    }
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -748,6 +844,21 @@ app.post("/status-history", async (req, res) => {
       [id, service_request_id, status, notes || null, changed_by]
     );
     const [rows] = await pool.query("SELECT * FROM status_history WHERE id = ?", [id]);
+    const [requestRows] = await pool.query("SELECT * FROM service_requests WHERE id = ?", [
+      service_request_id,
+    ]);
+    const request = requestRows[0];
+    if (request) {
+      const recipients = [request.customer_id, request.assigned_mechanic_id].filter(Boolean);
+      await createNotifications(pool, recipients, {
+        actorId: changed_by,
+        type: "service_status_log",
+        title: "Riwayat status diperbarui",
+        message: `Status servis ${request.service_type} dicatat sebagai ${status}.`,
+        entityType: "service_request",
+        entityId: request.id,
+      });
+    }
     res.status(201).json(rows[0]);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -787,6 +898,22 @@ app.post("/service-progress", async (req, res) => {
       [id, service_request_id, progress_date, description, created_by]
     );
     const [rows] = await pool.query("SELECT * FROM service_progress WHERE id = ?", [id]);
+    const [requestRows] = await pool.query("SELECT * FROM service_requests WHERE id = ?", [
+      service_request_id,
+    ]);
+    const request = requestRows[0];
+    if (request) {
+      const adminIds = await getActiveUserIdsByRole(pool, "admin");
+      const recipients = [request.customer_id, ...adminIds].filter(Boolean);
+      await createNotifications(pool, recipients, {
+        actorId: created_by,
+        type: "service_progress",
+        title: "Progress servis baru",
+        message: `Progress terbaru untuk ${request.service_type}: ${description}.`,
+        entityType: "service_request",
+        entityId: request.id,
+      });
+    }
     res.status(201).json(rows[0]);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -817,7 +944,89 @@ app.post("/service-photos", async (req, res) => {
       ]
     );
     const [rows] = await pool.query("SELECT * FROM service_photos WHERE id = ?", [id]);
+    const [requestRows] = await pool.query("SELECT * FROM service_requests WHERE id = ?", [
+      service_request_id,
+    ]);
+    const request = requestRows[0];
+    if (request) {
+      const adminIds = await getActiveUserIdsByRole(pool, "admin");
+      const recipients = [request.customer_id, ...adminIds].filter(Boolean);
+      await createNotifications(pool, recipients, {
+        actorId: uploaded_by,
+        type: "service_photo",
+        title: "Foto servis baru",
+        message: description
+          ? `Foto servis ditambahkan: ${description}.`
+          : `Foto servis baru ditambahkan untuk ${request.service_type}.`,
+        entityType: "service_request",
+        entityId: request.id,
+      });
+    }
     res.status(201).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.get("/notifications", async (req, res) => {
+  try {
+    const pool = getPool();
+    const filters = [];
+    const values = [];
+    if (req.query.recipient_id) {
+      filters.push("recipient_id = ?");
+      values.push(req.query.recipient_id);
+    }
+    if (req.query.unread_only !== undefined) {
+      const unreadOnly =
+        String(req.query.unread_only).toLowerCase() === "true" || req.query.unread_only === "1";
+      if (unreadOnly) {
+        filters.push("is_read = 0");
+      }
+    }
+    const whereClause = filters.length ? ` WHERE ${filters.join(" AND ")}` : "";
+    const limitRaw = Number(req.query.limit ?? 50);
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 50;
+    const [rows] = await pool.query(
+      `SELECT * FROM notifications${whereClause} ORDER BY created_at DESC LIMIT ${limit}`,
+      values
+    );
+    const response = rows.map((row) => ({ ...row, is_read: Boolean(row.is_read) }));
+    res.json(response);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.patch("/notifications/:id", async (req, res) => {
+  const { id } = req.params;
+  const { is_read } = req.body ?? {};
+  if (is_read === undefined) {
+    return res.status(400).json({ message: "Tidak ada data yang diperbarui" });
+  }
+  try {
+    const pool = getPool();
+    await pool.query("UPDATE notifications SET is_read = ? WHERE id = ?", [is_read ? 1 : 0, id]);
+    const [rows] = await pool.query("SELECT * FROM notifications WHERE id = ?", [id]);
+    const row = rows[0] ?? null;
+    res.json(row ? { ...row, is_read: Boolean(row.is_read) } : null);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post("/notifications/mark-all-read", async (req, res) => {
+  const { recipient_id } = req.body ?? {};
+  if (!recipient_id) {
+    return res.status(400).json({ message: "recipient_id wajib diisi" });
+  }
+  try {
+    const pool = getPool();
+    const [result] = await pool.query(
+      "UPDATE notifications SET is_read = 1 WHERE recipient_id = ? AND is_read = 0",
+      [recipient_id]
+    );
+    res.json({ updated: result?.affectedRows ?? 0 });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
