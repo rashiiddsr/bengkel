@@ -56,8 +56,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     } else {
       return [
         { to: '/customer', icon: LayoutDashboard, label: 'Beranda' },
-        { to: '/customer/my-requests', icon: FileText, label: 'Permintaan Saya' },
-        { to: '/customer/vehicles', icon: Car, label: 'Kendaraan Saya' },
+        { to: '/customer/my-requests', icon: FileText, label: 'Daftar Permintaan' },
+        { to: '/customer/vehicles', icon: Car, label: 'Daftar Kendaraan' },
       ];
     }
   };

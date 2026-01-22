@@ -3,7 +3,7 @@ import { Card, CardBody } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { api } from '../../lib/api';
 import type { Profile } from '../../lib/database.types';
-import { Users } from 'lucide-react';
+import { Search, Users } from 'lucide-react';
 
 export function Customers() {
   const [customers, setCustomers] = useState<Profile[]>([]);
@@ -54,12 +54,16 @@ export function Customers() {
 
       <Card>
         <CardBody>
-          <div className="mb-4 max-w-md">
-            <Input
-              placeholder="Cari pelanggan..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="mb-4 w-full">
+            <div className="relative">
+              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                placeholder="Cari pelanggan..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Users, Wrench, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { FileText, Users, Wrench, Clock, CheckCircle, AlertCircle, Search } from 'lucide-react';
 import { Card, CardBody } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { api } from '../../lib/api';
@@ -101,12 +101,16 @@ export function AdminDashboard() {
           </div>
         </div>
         <CardBody>
-          <div className="mb-4 max-w-md">
-            <Input
-              placeholder="Cari permintaan servis..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="mb-4 w-full">
+            <div className="relative">
+              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                placeholder="Cari permintaan servis..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>

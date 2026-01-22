@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { ServiceRequest, Profile } from '../../lib/database.types';
-import { Edit } from 'lucide-react';
+import { Edit, Search } from 'lucide-react';
 import { formatCurrency, formatStatus } from '../../lib/format';
 
 interface RequestWithDetails extends ServiceRequest {
@@ -119,8 +119,8 @@ export function ServiceRequests() {
         Kelola Permintaan Servis
       </h1>
 
-      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="w-full md:max-w-xs">
+      <div className="mb-4 flex flex-col gap-3">
+        <div className="w-full">
           <Select
             options={[
               { value: 'all', label: 'Semua Permintaan' },
@@ -133,12 +133,16 @@ export function ServiceRequests() {
             onChange={(e) => setFilterStatus(e.target.value)}
           />
         </div>
-        <div className="w-full md:max-w-sm">
-          <Input
-            placeholder="Cari permintaan servis..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="w-full">
+          <div className="relative">
+            <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
+              placeholder="Cari permintaan servis..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
       </div>
 
