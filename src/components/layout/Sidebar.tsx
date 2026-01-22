@@ -11,6 +11,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import logo from '../../img.png';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -89,8 +90,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-4 border-b border-gray-800">
             <div className="flex items-center space-x-2">
-              <Wrench className="h-8 w-8 text-blue-500" />
-              <span className="text-xl font-bold text-white">Bintang Motor Auto Service</span>
+              <img src={logo} alt="BM AutoService" className="h-8 w-8 rounded-full object-cover" />
+              <span className="text-xl font-bold text-white">BM AutoService</span>
             </div>
             <button
               onClick={onClose}

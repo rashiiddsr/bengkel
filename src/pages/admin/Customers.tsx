@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Card, CardBody } from '../../components/ui/Card';
+import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Input, TextArea } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
@@ -135,6 +135,9 @@ export function Customers() {
       </h1>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Daftar Pelanggan</CardTitle>
+        </CardHeader>
         <CardBody>
           <div className="mb-4 w-full">
             <div className="relative">

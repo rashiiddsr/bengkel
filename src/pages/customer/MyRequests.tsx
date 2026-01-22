@@ -188,6 +188,9 @@ export function MyRequests() {
       </div>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Daftar Permintaan Servis</CardTitle>
+        </CardHeader>
         <CardBody>
           <div className="mb-4 w-full">
             <div className="relative">

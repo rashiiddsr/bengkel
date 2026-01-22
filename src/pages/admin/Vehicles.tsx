@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Card, CardBody } from '../../components/ui/Card';
+import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -108,6 +108,9 @@ export function Vehicles() {
       </h1>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Daftar Kendaraan</CardTitle>
+        </CardHeader>
         <CardBody>
           <div className="mb-4 w-full">
             <div className="relative">
