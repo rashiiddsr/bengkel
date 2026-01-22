@@ -883,6 +883,28 @@ app.get("/service-progress", async (req, res) => {
   }
 });
 
+app.get("/service-photos", async (req, res) => {
+  try {
+    const pool = getPool();
+    const filters = [];
+    const values = [];
+    if (req.query.service_request_id) {
+      filters.push("service_request_id = ?");
+      values.push(req.query.service_request_id);
+    }
+    if (req.query.service_progress_id) {
+      filters.push("service_progress_id = ?");
+      values.push(req.query.service_progress_id);
+    }
+    const whereClause = filters.length ? ` WHERE ${filters.join(" AND ")}` : "";
+    const orderClause = buildOrderClause(req.query.order, ["created_at"]);
+    const [rows] = await pool.query(`SELECT * FROM service_photos${whereClause}${orderClause}`, values);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 app.post("/service-progress", async (req, res) => {
   const { service_request_id, progress_date, description, created_by } = req.body ?? {};
   if (!service_request_id || !progress_date || !description || !created_by) {
