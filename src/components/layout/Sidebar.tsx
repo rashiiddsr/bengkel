@@ -42,10 +42,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     if (role === 'admin') {
       return [
         { to: '/admin', icon: LayoutDashboard, label: 'Beranda' },
-        { to: '/admin/service-requests', icon: FileText, label: 'Permintaan Servis' },
-        { to: '/admin/mechanics', icon: Wrench, label: 'Mekanik' },
-        { to: '/admin/customers', icon: Users, label: 'Pelanggan' },
-        { to: '/admin/vehicles', icon: Car, label: 'Kendaraan' },
+        { to: '/admin/service-requests', icon: FileText, label: 'Daftar Servis' },
+        { to: '/admin/mechanics', icon: Wrench, label: 'Daftar Mekanik' },
+        { to: '/admin/customers', icon: Users, label: 'Daftar Pelanggan' },
       ];
     } else if (role === 'mechanic') {
       return [

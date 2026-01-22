@@ -212,6 +212,71 @@ app.get("/profiles", async (req, res) => {
   }
 });
 
+app.patch("/profiles/:id", async (req, res) => {
+  const { id } = req.params;
+  const { full_name, phone, address } = req.body ?? {};
+
+  if (!full_name && !phone && !address) {
+    return res.status(400).json({ message: "Tidak ada data yang diperbarui" });
+  }
+
+  try {
+    const pool = getPool();
+    const fields = [];
+    const values = [];
+
+    if (full_name !== undefined) {
+      fields.push("full_name = ?");
+      values.push(full_name);
+    }
+    if (phone !== undefined) {
+      fields.push("phone = ?");
+      values.push(phone);
+    }
+    if (address !== undefined) {
+      fields.push("address = ?");
+      values.push(address);
+    }
+
+    values.push(id);
+    await pool.query(`UPDATE profiles SET ${fields.join(", ")} WHERE id = ?`, values);
+    const [rows] = await pool.query("SELECT * FROM profiles WHERE id = ?", [id]);
+    res.json(rows[0] ?? null);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post("/mechanics", async (req, res) => {
+  const { email, password, full_name, phone, address } = req.body ?? {};
+  if (!email || !password || !full_name) {
+    return res.status(400).json({ message: "email, password, dan full_name wajib diisi" });
+  }
+
+  const userId = crypto.randomUUID();
+  try {
+    const pool = getPool();
+    await pool.query(
+      "INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, SHA2(?, 256), ?)",
+      [userId, email, password, "mechanic"]
+    );
+    await pool.query("INSERT INTO profiles (id, full_name, role, phone, address) VALUES (?, ?, ?, ?, ?)", [
+      userId,
+      full_name,
+      "mechanic",
+      phone || null,
+      address || null,
+    ]);
+    const [profileRows] = await pool.query("SELECT * FROM profiles WHERE id = ?", [userId]);
+    res.status(201).json(profileRows[0] ?? null);
+  } catch (error) {
+    if (error?.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ message: "Email sudah terdaftar" });
+    }
+    res.status(500).json({ message: error.message });
+  }
+});
+
 app.get("/vehicles", async (req, res) => {
   try {
     const pool = getPool();
