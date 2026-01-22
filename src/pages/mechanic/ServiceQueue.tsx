@@ -44,24 +44,6 @@ export function ServiceQueue() {
     return () => window.clearInterval(intervalId);
   }, [user]);
 
-  const fetchDetailProgress = async (serviceRequestId: string) => {
-    setDetailLoading(true);
-    try {
-      const [progressRes, photoRes] = await Promise.all([
-        api.listServiceProgress({ service_request_id: serviceRequestId, order: 'progress_date.desc' }),
-        api.listServicePhotos({ service_request_id: serviceRequestId, order: 'created_at.desc' }),
-      ]);
-      setDetailProgress(progressRes ?? []);
-      setDetailPhotos(photoRes ?? []);
-    } catch (error) {
-      console.error(error);
-      setDetailProgress([]);
-      setDetailPhotos([]);
-    } finally {
-      setDetailLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (!detailJob) {
       setDetailProgress([]);
@@ -70,7 +52,25 @@ export function ServiceQueue() {
       return;
     }
 
-    fetchDetailProgress(detailJob.id);
+    const fetchProgress = async () => {
+      setDetailLoading(true);
+      try {
+        const [progressRes, photoRes] = await Promise.all([
+          api.listServiceProgress({ service_request_id: detailJob.id, order: 'progress_date.desc' }),
+          api.listServicePhotos({ service_request_id: detailJob.id, order: 'created_at.desc' }),
+        ]);
+        setDetailProgress(progressRes ?? []);
+        setDetailPhotos(photoRes ?? []);
+      } catch (error) {
+        console.error(error);
+        setDetailProgress([]);
+        setDetailPhotos([]);
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+
+    fetchProgress();
   }, [detailJob]);
 
   const fetchJobs = async () => {
@@ -119,24 +119,15 @@ export function ServiceQueue() {
       created_by: user.id,
     });
 
-    let createdPhoto: ServicePhoto | null = null;
     if (progressForm.photoFile) {
       const photoUrl = await api.uploadImage(progressForm.photoFile);
-      createdPhoto = await api.createServicePhoto({
+      await api.createServicePhoto({
         service_request_id: progressJob.id,
         service_progress_id: progress.id,
         photo_url: photoUrl,
         description: progressForm.photoDescription.trim() || null,
         uploaded_by: user.id,
       });
-    }
-
-    if (detailJob?.id === progressJob.id) {
-      setDetailProgress((prev) => [progress, ...prev]);
-      if (createdPhoto) {
-        setDetailPhotos((prev) => [createdPhoto, ...prev]);
-      }
-      await fetchDetailProgress(progressJob.id);
     }
 
     setProgressJob(null);
@@ -464,14 +455,9 @@ export function ServiceQueue() {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0] ?? null;
-                      setProgressForm({
-                        ...progressForm,
-                        photoFile: file,
-                        photoDescription: file ? progressForm.photoDescription : '',
-                      });
-                    }}
+                    onChange={(event) =>
+                      setProgressForm({ ...progressForm, photoFile: event.target.files?.[0] ?? null })
+                    }
                   />
                 </label>
                 {progressForm.photoFile ? (
@@ -494,7 +480,6 @@ export function ServiceQueue() {
                 setProgressForm({ ...progressForm, photoDescription: e.target.value })
               }
               rows={3}
-              disabled={!progressForm.photoFile}
             />
 
             <div className="flex space-x-4 pt-4">
