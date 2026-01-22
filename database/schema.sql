@@ -6,7 +6,7 @@ CREATE TABLE users (
   username VARCHAR(100) NOT NULL UNIQUE,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
-  role ENUM('superadmin', 'admin', 'mechanic', 'customer') NOT NULL DEFAULT 'customer',
+  role ENUM('admin', 'mechanic', 'customer') NOT NULL DEFAULT 'customer',
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -15,7 +15,7 @@ CREATE TABLE users (
 CREATE TABLE profiles (
   id CHAR(36) PRIMARY KEY,
   full_name VARCHAR(255) NOT NULL,
-  role ENUM('superadmin', 'admin', 'mechanic', 'customer') NOT NULL DEFAULT 'customer',
+  role ENUM('admin', 'mechanic', 'customer') NOT NULL DEFAULT 'customer',
   phone VARCHAR(30),
   address TEXT,
   avatar_url TEXT,
@@ -102,23 +102,35 @@ CREATE TABLE service_photos (
   CONSTRAINT fk_service_photos_user FOREIGN KEY (uploaded_by) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
-SET @superadmin_id = UUID();
+CREATE TABLE notifications (
+  id CHAR(36) PRIMARY KEY,
+  recipient_id CHAR(36) NOT NULL,
+  actor_id CHAR(36),
+  type VARCHAR(50) NOT NULL,
+  title VARCHAR(150) NOT NULL,
+  message TEXT,
+  entity_type VARCHAR(80),
+  entity_id CHAR(36),
+  is_read BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_notifications_recipient FOREIGN KEY (recipient_id) REFERENCES profiles(id) ON DELETE CASCADE,
+  CONSTRAINT fk_notifications_actor FOREIGN KEY (actor_id) REFERENCES profiles(id) ON DELETE SET NULL
+);
+
 SET @admin_id = UUID();
 SET @mechanic_id = UUID();
 SET @customer_id = UUID();
 
 INSERT INTO users (id, username, email, password_hash, role)
 VALUES
-  (@superadmin_id, 'superadmin', 'superadmin@gmail.com', SHA2('superadmin', 256), 'superadmin'),
   (@admin_id, 'admin', 'admin@gmail.com', SHA2('admin', 256), 'admin'),
-  (@mechanic_id, 'mechanic', 'mechanic@gmail.com', SHA2('mechanic', 256), 'mechanic');
-  (@customer_id, 'customer', 'customer@gmail.com', SHA2('customer', 256), 'mechanic');
+  (@mechanic_id, 'mechanic', 'mechanic@gmail.com', SHA2('mechanic', 256), 'mechanic'),
+  (@customer_id, 'customer', 'customer@gmail.com', SHA2('customer', 256), 'customer');
 
 INSERT INTO profiles (id, full_name, role)
 VALUES
-  (@superadmin_id, 'Superadmin', 'superadmin'),
   (@admin_id, 'Admin', 'admin'),
-  (@mechanic_id, 'Mekanik', 'mechanic');
+  (@mechanic_id, 'Mekanik', 'mechanic'),
   (@customer_id, 'Customer', 'customer');
 
 INSERT INTO service_types (id, name, description)

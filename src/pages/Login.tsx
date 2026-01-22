@@ -41,7 +41,6 @@ export function Login() {
       admin: '/admin',
       mechanic: '/mechanic',
       customer: '/customer',
-      superadmin: '/admin',
     };
     navigate(redirectMap[role ?? ''] ?? '/');
   };
