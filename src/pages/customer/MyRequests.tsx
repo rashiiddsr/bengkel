@@ -9,6 +9,7 @@ import type { ServiceRequest, Vehicle, StatusHistory, Profile, ServiceType } fro
 import { Eye, Clock, Plus, Search } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { formatCurrency, formatDate, formatDateTime, formatStatus } from '../../lib/format';
+import { parseMechanicNotes } from '../../lib/mechanicNotes';
 
 interface RequestWithDetails extends ServiceRequest {
   vehicle?: Vehicle;
@@ -174,6 +175,10 @@ export function MyRequests() {
     const target = `${request.service_type} ${vehicleLabel} ${request.status}`.toLowerCase();
     return target.includes(normalizedSearch);
   });
+
+  const mechanicNotesContent = selectedRequest?.mechanic_notes
+    ? parseMechanicNotes(selectedRequest.mechanic_notes)
+    : [];
 
   return (
     <div>
@@ -345,12 +350,21 @@ export function MyRequests() {
               </div>
             )}
 
-            {selectedRequest.mechanic_notes && (
+            {mechanicNotesContent.length > 0 && (
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Catatan Mekanik</p>
-                <p className="text-gray-900 dark:text-white">
-                  {selectedRequest.mechanic_notes}
-                </p>
+                <ol className="list-decimal space-y-1 pl-5 text-gray-900 dark:text-white">
+                  {mechanicNotesContent.map((item, index) => (
+                    <li key={`${item.note}-${index}`} className="flex items-start justify-between gap-4">
+                      <span>{item.note}</span>
+                      {item.cost !== null && item.cost !== undefined && (
+                        <span className="text-sm text-gray-500 dark:text-gray-300">
+                          {formatCurrency(item.cost)}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
               </div>
             )}
 
