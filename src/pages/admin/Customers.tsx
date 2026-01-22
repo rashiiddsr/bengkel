@@ -4,6 +4,7 @@ import { Input, TextArea } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { api, type ServiceRequestWithRelations, type UserProfile } from '../../lib/api';
+import { formatDate, formatStatus } from '../../lib/format';
 import type { Vehicle } from '../../lib/database.types';
 import { Eye, Pencil, Search, Users } from 'lucide-react';
 
@@ -15,6 +16,7 @@ export function Customers() {
   const [editingCustomer, setEditingCustomer] = useState<UserProfile | null>(null);
   const [editForm, setEditForm] = useState({
     fullName: '',
+    username: '',
     email: '',
     phone: '',
     address: '',
@@ -69,6 +71,7 @@ export function Customers() {
     setEditingCustomer(customer);
     setEditForm({
       fullName: customer.full_name ?? '',
+      username: customer.username ?? '',
       email: customer.email ?? '',
       phone: customer.phone ?? '',
       address: customer.address ?? '',
@@ -90,8 +93,9 @@ export function Customers() {
         address: editForm.address || null,
       });
 
-      const userPayload: { email?: string; password?: string } = {
+      const userPayload: { email?: string; username?: string; password?: string } = {
         email: editForm.email.trim(),
+        username: editForm.username.trim(),
       };
       if (editForm.password) {
         userPayload.password = editForm.password;
@@ -120,7 +124,7 @@ export function Customers() {
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredCustomers = customers.filter((customer) => {
     if (!normalizedSearch) return true;
-    const target = `${customer.full_name} ${customer.email ?? ''} ${customer.phone ?? ''} ${customer.address ?? ''}`.toLowerCase();
+    const target = `${customer.full_name} ${customer.username ?? ''} ${customer.email ?? ''} ${customer.phone ?? ''} ${customer.address ?? ''}`.toLowerCase();
     return target.includes(normalizedSearch);
   });
 
@@ -176,8 +180,16 @@ export function Customers() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0">
-                            <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center overflow-hidden">
+                              {customer.avatar_url ? (
+                                <img
+                                  src={customer.avatar_url}
+                                  alt={customer.full_name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              )}
                             </div>
                           </div>
                           <div className="ml-4">
@@ -260,6 +272,10 @@ export function Customers() {
                   <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.email || '-'}</p>
                 </div>
                 <div>
+                  <p className="text-gray-500 dark:text-gray-400">Username</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.username || '-'}</p>
+                </div>
+                <div>
                   <p className="text-gray-500 dark:text-gray-400">Telepon</p>
                   <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.phone || '-'}</p>
                 </div>
@@ -312,9 +328,11 @@ export function Customers() {
                               ? `${request.vehicle.make} ${request.vehicle.model} (${request.vehicle.license_plate})`
                               : '-'}
                           </td>
-                          <td className="px-4 py-2 text-gray-500 dark:text-gray-400">{request.status}</td>
                           <td className="px-4 py-2 text-gray-500 dark:text-gray-400">
-                            {request.preferred_date || '-'}
+                            {formatStatus(request.status)}
+                          </td>
+                          <td className="px-4 py-2 text-gray-500 dark:text-gray-400">
+                            {request.preferred_date ? formatDate(request.preferred_date) : formatDate(request.created_at)}
                           </td>
                         </tr>
                       ))}
@@ -381,6 +399,16 @@ export function Customers() {
             )}
             value={editForm.fullName}
             onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+            required
+          />
+          <Input
+            label={(
+              <>
+                Username <span className="text-red-500">*</span>
+              </>
+            )}
+            value={editForm.username}
+            onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
             required
           />
           <Input

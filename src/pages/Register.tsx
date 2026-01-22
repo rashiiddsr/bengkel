@@ -2,16 +2,18 @@ import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Wrench } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { Input } from '../components/ui/Input';
+import { Input, TextArea } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 
 export function Register() {
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const { signOut, signUp } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
+    username: '',
     email: '',
     phone: '',
+    address: '',
     password: '',
     confirmPassword: '',
   });
@@ -31,9 +33,11 @@ export function Register() {
 
     const { error: signUpError } = await signUp(
       formData.email,
+      formData.username,
       formData.password,
       formData.fullName,
-      formData.phone
+      formData.phone,
+      formData.address
     );
 
     if (signUpError) {
@@ -42,8 +46,17 @@ export function Register() {
       return;
     }
 
-    navigate('/');
+    await signOut();
+    navigate('/login', {
+      state: { message: 'Pembuatan akun berhasil. Silakan masuk dengan akun Anda.' },
+    });
   };
+
+  const requiredLabel = (text: string) => (
+    <>
+      {text} <span className="text-red-500">*</span>
+    </>
+  );
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 px-4 py-8">
@@ -71,7 +84,7 @@ export function Register() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               type="text"
-              label="Nama Lengkap"
+              label={requiredLabel('Nama Lengkap')}
               placeholder="Masukkan nama lengkap Anda"
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
@@ -79,8 +92,17 @@ export function Register() {
             />
 
             <Input
+              type="text"
+              label={requiredLabel('Username')}
+              placeholder="Masukkan username Anda"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              required
+            />
+
+            <Input
               type="email"
-              label="Email"
+              label={requiredLabel('Email')}
               placeholder="Masukkan email Anda"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -89,16 +111,23 @@ export function Register() {
 
             <Input
               type="tel"
-              label="Nomor Telepon"
+              label={requiredLabel('Nomor Telepon')}
               placeholder="Masukkan nomor telepon Anda"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               required
             />
 
+            <TextArea
+              label="Alamat"
+              placeholder="Masukkan alamat Anda (opsional)"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            />
+
             <Input
               type="password"
-              label="Kata Sandi"
+              label={requiredLabel('Kata Sandi')}
               placeholder="Buat kata sandi"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -107,7 +136,7 @@ export function Register() {
 
             <Input
               type="password"
-              label="Konfirmasi Kata Sandi"
+              label={requiredLabel('Konfirmasi Kata Sandi')}
               placeholder="Konfirmasi kata sandi"
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}

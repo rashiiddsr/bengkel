@@ -6,6 +6,7 @@ import {
   Users,
   Wrench,
   Car,
+  UserCircle,
   X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -45,18 +46,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         { to: '/admin/service-requests', icon: FileText, label: 'Daftar Servis' },
         { to: '/admin/mechanics', icon: Wrench, label: 'Daftar Mekanik' },
         { to: '/admin/customers', icon: Users, label: 'Daftar Pelanggan' },
+        { to: '/profile', icon: UserCircle, label: 'Profil' },
       ];
     } else if (role === 'mechanic') {
       return [
         { to: '/mechanic', icon: LayoutDashboard, label: 'Beranda' },
         { to: '/mechanic/queue', icon: FileText, label: 'Antrian Servis' },
         { to: '/mechanic/completed', icon: FileText, label: 'Pekerjaan Selesai' },
+        { to: '/profile', icon: UserCircle, label: 'Profil' },
       ];
     } else {
       return [
         { to: '/customer', icon: LayoutDashboard, label: 'Beranda' },
         { to: '/customer/my-requests', icon: FileText, label: 'Daftar Permintaan' },
         { to: '/customer/vehicles', icon: Car, label: 'Daftar Kendaraan' },
+        { to: '/profile', icon: UserCircle, label: 'Profil' },
       ];
     }
   };

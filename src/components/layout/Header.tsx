@@ -15,6 +15,7 @@ export function Header({ isSidebarOpen, onMenuClick }: HeaderProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const displayName = profile?.full_name ?? user?.email ?? 'Akun';
+  const avatarUrl = profile?.avatar_url ?? null;
   const roleLabel = useMemo(() => {
     const role = profile?.role ?? user?.role;
     if (!role) {
@@ -65,8 +66,12 @@ export function Header({ isSidebarOpen, onMenuClick }: HeaderProps) {
             onClick={() => setIsMenuOpen(prev => !prev)}
             className="flex items-center gap-3 rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
-              {initials}
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-sm font-semibold text-white">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+              ) : (
+                initials
+              )}
             </div>
             <div className="hidden flex-col items-start text-left sm:flex">
               <span className="text-sm font-semibold text-gray-900 dark:text-white">

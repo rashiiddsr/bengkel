@@ -119,16 +119,19 @@ app.get("/auth/session", async (req, res) => {
 });
 
 app.post("/auth/login", async (req, res) => {
-  const { email, password } = req.body ?? {};
-  if (!email || !password) {
-      return res.status(400).json({ message: "email dan password wajib diisi" });
+  const { identifier, email, username, password } = req.body ?? {};
+  const loginValue = identifier || email || username;
+  if (!loginValue || !password) {
+    return res.status(400).json({ message: "username/email dan password wajib diisi" });
   }
 
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      "SELECT id, email, role, is_active FROM users WHERE email = ? AND password_hash = SHA2(?, 256)",
-      [email, password]
+      `SELECT id, username, email, role, is_active
+      FROM users
+      WHERE (email = ? OR username = ?) AND password_hash = SHA2(?, 256)`,
+      [loginValue, loginValue, password]
     );
     const user = rows[0];
     if (!user) {
@@ -150,25 +153,28 @@ app.post("/auth/login", async (req, res) => {
 });
 
 app.post("/auth/register", async (req, res) => {
-  const { email, password, full_name, phone } = req.body ?? {};
-  if (!email || !password || !full_name) {
-    return res.status(400).json({ message: "email, password, dan full_name wajib diisi" });
+  const { email, username, password, full_name, phone, address } = req.body ?? {};
+  if (!email || !username || !password || !full_name || !phone) {
+    return res
+      .status(400)
+      .json({ message: "email, username, password, full_name, dan phone wajib diisi" });
   }
 
   const userId = crypto.randomUUID();
   try {
     const pool = getPool();
     await pool.query(
-      "INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, SHA2(?, 256), ?)",
-      [userId, email, password, "customer"]
+      "INSERT INTO users (id, username, email, password_hash, role) VALUES (?, ?, ?, SHA2(?, 256), ?)",
+      [userId, username, email, password, "customer"]
     );
-    await pool.query("INSERT INTO profiles (id, full_name, role, phone) VALUES (?, ?, ?, ?)", [
+    await pool.query("INSERT INTO profiles (id, full_name, role, phone, address) VALUES (?, ?, ?, ?, ?)", [
       userId,
       full_name,
       "customer",
-      phone || null,
+      phone,
+      address || null,
     ]);
-    const user = { id: userId, email, role: "customer" };
+    const user = { id: userId, username, email, role: "customer" };
     const [profileRows] = await pool.query("SELECT * FROM profiles WHERE id = ?", [userId]);
     const profile = profileRows[0] ?? null;
     const sessionId = crypto.randomUUID();
@@ -177,7 +183,7 @@ app.post("/auth/register", async (req, res) => {
     res.status(201).json({ user, profile });
   } catch (error) {
     if (error?.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ message: "Email sudah terdaftar" });
+      return res.status(409).json({ message: "Email atau username sudah terdaftar" });
     }
     res.status(500).json({ message: error.message });
   }
@@ -214,7 +220,7 @@ app.get("/profiles", async (req, res) => {
     const whereClause = filters.length ? ` WHERE ${filters.join(" AND ")}` : "";
     const orderClause = buildOrderClause(req.query.order, ["full_name", "created_at"]);
     const [rows] = await pool.query(
-      `SELECT profiles.*, users.email AS email, users.is_active AS is_active
+      `SELECT profiles.*, users.email AS email, users.username AS username, users.is_active AS is_active
       FROM profiles
       INNER JOIN users ON users.id = profiles.id${whereClause}${orderClause}`,
       values
@@ -231,9 +237,9 @@ app.get("/profiles", async (req, res) => {
 
 app.patch("/profiles/:id", async (req, res) => {
   const { id } = req.params;
-  const { full_name, phone, address } = req.body ?? {};
+  const { full_name, phone, address, avatar_url } = req.body ?? {};
 
-  if (!full_name && !phone && !address) {
+  if (full_name === undefined && phone === undefined && address === undefined && avatar_url === undefined) {
     return res.status(400).json({ message: "Tidak ada data yang diperbarui" });
   }
 
@@ -254,6 +260,10 @@ app.patch("/profiles/:id", async (req, res) => {
       fields.push("address = ?");
       values.push(address);
     }
+    if (avatar_url !== undefined) {
+      fields.push("avatar_url = ?");
+      values.push(avatar_url);
+    }
 
     values.push(id);
     await pool.query(`UPDATE profiles SET ${fields.join(", ")} WHERE id = ?`, values);
@@ -266,9 +276,9 @@ app.patch("/profiles/:id", async (req, res) => {
 
 app.patch("/users/:id", async (req, res) => {
   const { id } = req.params;
-  const { email, password, is_active } = req.body ?? {};
+  const { email, username, password, is_active } = req.body ?? {};
 
-  if (email === undefined && password === undefined && is_active === undefined) {
+  if (email === undefined && username === undefined && password === undefined && is_active === undefined) {
     return res.status(400).json({ message: "Tidak ada data yang diperbarui" });
   }
 
@@ -281,6 +291,10 @@ app.patch("/users/:id", async (req, res) => {
       fields.push("email = ?");
       values.push(email);
     }
+    if (username !== undefined) {
+      fields.push("username = ?");
+      values.push(username);
+    }
     if (password !== undefined) {
       fields.push("password_hash = SHA2(?, 256)");
       values.push(password);
@@ -292,28 +306,28 @@ app.patch("/users/:id", async (req, res) => {
 
     values.push(id);
     await pool.query(`UPDATE users SET ${fields.join(", ")} WHERE id = ?`, values);
-    const [rows] = await pool.query("SELECT id, email, role, is_active FROM users WHERE id = ?", [id]);
+    const [rows] = await pool.query("SELECT id, username, email, role, is_active FROM users WHERE id = ?", [id]);
     res.json(rows[0] ?? null);
   } catch (error) {
     if (error?.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ message: "Email sudah terdaftar" });
+      return res.status(409).json({ message: "Email atau username sudah terdaftar" });
     }
     res.status(500).json({ message: error.message });
   }
 });
 
 app.post("/mechanics", async (req, res) => {
-  const { email, password, full_name, phone, address } = req.body ?? {};
-  if (!email || !password || !full_name) {
-    return res.status(400).json({ message: "email, password, dan full_name wajib diisi" });
+  const { email, username, password, full_name, phone, address } = req.body ?? {};
+  if (!email || !username || !password || !full_name) {
+    return res.status(400).json({ message: "email, username, password, dan full_name wajib diisi" });
   }
 
   const userId = crypto.randomUUID();
   try {
     const pool = getPool();
     await pool.query(
-      "INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, SHA2(?, 256), ?)",
-      [userId, email, password, "mechanic"]
+      "INSERT INTO users (id, username, email, password_hash, role) VALUES (?, ?, ?, SHA2(?, 256), ?)",
+      [userId, username, email, password, "mechanic"]
     );
     await pool.query("INSERT INTO profiles (id, full_name, role, phone, address) VALUES (?, ?, ?, ?, ?)", [
       userId,
@@ -326,7 +340,7 @@ app.post("/mechanics", async (req, res) => {
     res.status(201).json(profileRows[0] ?? null);
   } catch (error) {
     if (error?.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ message: "Email sudah terdaftar" });
+      return res.status(409).json({ message: "Email atau username sudah terdaftar" });
     }
     res.status(500).json({ message: error.message });
   }
