@@ -117,7 +117,7 @@ export function Vehicles() {
 
       <Card>
         <CardBody>
-          <div className="mb-4 max-w-md">
+          <div className="mb-4 w-full">
             <div className="relative">
               <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <Input

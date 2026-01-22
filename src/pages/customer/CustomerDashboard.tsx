@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Car, Clock, CheckCircle, Plus } from 'lucide-react';
+import { FileText, Car, Clock, CheckCircle } from 'lucide-react';
 import { Card, CardHeader, CardBody, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { api } from '../../lib/api';
@@ -40,12 +40,6 @@ export function CustomerDashboard() {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           Beranda
         </h1>
-        <Link to="/customer/my-requests" state={{ openNewRequest: true }}>
-          <Button>
-            <Plus className="h-5 w-5 mr-2" />
-            Permintaan Servis Baru
-          </Button>
-        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -114,9 +108,6 @@ export function CustomerDashboard() {
               <p className="text-gray-500 dark:text-gray-400 mb-4">
                 Belum ada permintaan servis
               </p>
-              <Link to="/customer/my-requests" state={{ openNewRequest: true }}>
-                <Button>Buat Permintaan Pertama</Button>
-              </Link>
             </div>
           ) : (
             <div className="space-y-4">
