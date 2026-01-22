@@ -3,10 +3,11 @@ import { Card, CardBody } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { api } from '../../lib/api';
+import { api, resolveImageUrl } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { Eye, Search } from 'lucide-react';
 import { formatCurrency, formatDate, formatDateTime, formatStatus } from '../../lib/format';
+import type { ServicePhoto, ServiceProgress } from '../../lib/database.types';
 
 const REFRESH_INTERVAL = 30000;
 
@@ -14,6 +15,9 @@ export function CompletedJobs() {
   const { user } = useAuth();
   const [jobs, setJobs] = useState<any[]>([]);
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
+  const [detailProgress, setDetailProgress] = useState<ServiceProgress[]>([]);
+  const [detailPhotos, setDetailPhotos] = useState<ServicePhoto[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -25,6 +29,35 @@ export function CompletedJobs() {
     }, REFRESH_INTERVAL);
     return () => window.clearInterval(intervalId);
   }, [user]);
+
+  useEffect(() => {
+    if (!selectedJob) {
+      setDetailProgress([]);
+      setDetailPhotos([]);
+      setDetailLoading(false);
+      return;
+    }
+
+    const fetchProgress = async () => {
+      setDetailLoading(true);
+      try {
+        const [progressRes, photoRes] = await Promise.all([
+          api.listServiceProgress({ service_request_id: selectedJob.id, order: 'progress_date.desc' }),
+          api.listServicePhotos({ service_request_id: selectedJob.id, order: 'created_at.desc' }),
+        ]);
+        setDetailProgress(progressRes ?? []);
+        setDetailPhotos(photoRes ?? []);
+      } catch (error) {
+        console.error(error);
+        setDetailProgress([]);
+        setDetailPhotos([]);
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+
+    fetchProgress();
+  }, [selectedJob]);
 
   const fetchJobs = async () => {
     if (!user) return;
@@ -205,6 +238,54 @@ export function CompletedJobs() {
                 </p>
               </div>
             )}
+
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Laporan Kondisi Servis</p>
+              {detailLoading ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Memuat laporan...</p>
+              ) : detailProgress.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada laporan kondisi.</p>
+              ) : (
+                <div className="space-y-3">
+                  {detailProgress.map((progress) => {
+                    const photos = detailPhotos.filter((photo) => photo.service_progress_id === progress.id);
+                    return (
+                      <div key={progress.id} className="rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatDate(progress.progress_date)}
+                        </p>
+                        <p className="text-gray-900 dark:text-white">{progress.description}</p>
+                        {photos.length > 0 && (
+                          <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3">
+                            {photos.map((photo) => {
+                              const resolved = resolveImageUrl(photo.photo_url);
+                              return (
+                                <div key={photo.id} className="rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+                                  {resolved ? (
+                                    <img
+                                      src={resolved}
+                                      alt={photo.description ?? 'Foto progres servis'}
+                                      className="h-24 w-full rounded-md object-cover"
+                                    />
+                                  ) : (
+                                    <div className="flex h-24 items-center justify-center rounded-md bg-gray-100 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                                      Foto tidak tersedia
+                                    </div>
+                                  )}
+                                  {photo.description && (
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{photo.description}</p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               {selectedJob.estimated_cost && (

@@ -197,6 +197,10 @@ export const api = {
     }),
   listStatusHistory: (params?: QueryParams) =>
     apiFetch<StatusHistory[]>(`/status-history${buildQuery(params)}`),
+  listServiceProgress: (params?: QueryParams) =>
+    apiFetch<ServiceProgress[]>(`/service-progress${buildQuery(params)}`),
+  listServicePhotos: (params?: QueryParams) =>
+    apiFetch<ServicePhoto[]>(`/service-photos${buildQuery(params)}`),
   createStatusHistory: (payload: {
     service_request_id: string;
     status: string;

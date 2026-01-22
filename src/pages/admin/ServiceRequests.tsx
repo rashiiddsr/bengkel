@@ -3,11 +3,11 @@ import { Card, CardBody } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Input, Select, TextArea } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { api } from '../../lib/api';
+import { api, resolveImageUrl } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-import type { ServiceRequest, Profile } from '../../lib/database.types';
-import { Edit, Search } from 'lucide-react';
-import { formatCurrency, formatStatus } from '../../lib/format';
+import type { ServicePhoto, ServiceProgress, ServiceRequest, Profile } from '../../lib/database.types';
+import { Edit, Eye, Search } from 'lucide-react';
+import { formatCurrency, formatDate, formatStatus } from '../../lib/format';
 
 interface RequestWithDetails extends ServiceRequest {
   customer?: Profile;
@@ -22,6 +22,9 @@ export function ServiceRequests() {
   const [requests, setRequests] = useState<RequestWithDetails[]>([]);
   const [mechanics, setMechanics] = useState<Profile[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<RequestWithDetails | null>(null);
+  const [detailProgress, setDetailProgress] = useState<ServiceProgress[]>([]);
+  const [detailPhotos, setDetailPhotos] = useState<ServicePhoto[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,6 +47,35 @@ export function ServiceRequests() {
     }, REFRESH_INTERVAL);
     return () => window.clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    if (!selectedRequest) {
+      setDetailProgress([]);
+      setDetailPhotos([]);
+      setDetailLoading(false);
+      return;
+    }
+
+    const fetchProgress = async () => {
+      setDetailLoading(true);
+      try {
+        const [progressRes, photoRes] = await Promise.all([
+          api.listServiceProgress({ service_request_id: selectedRequest.id, order: 'progress_date.desc' }),
+          api.listServicePhotos({ service_request_id: selectedRequest.id, order: 'created_at.desc' }),
+        ]);
+        setDetailProgress(progressRes ?? []);
+        setDetailPhotos(photoRes ?? []);
+      } catch (error) {
+        console.error(error);
+        setDetailProgress([]);
+        setDetailPhotos([]);
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+
+    fetchProgress();
+  }, [selectedRequest]);
 
   const fetchData = async () => {
     const [requestsRes, mechanicsRes] = await Promise.all([
@@ -292,7 +324,15 @@ export function ServiceRequests() {
                             <Edit className="h-4 w-4" />
                           </Button>
                         ) : (
-                          <span className="text-xs text-gray-500 dark:text-gray-400">Tidak ada aksi</span>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleEdit(request)}
+                            title="Lihat Detail"
+                            aria-label="Lihat Detail"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                         )}
                       </td>
                     </tr>
@@ -317,6 +357,8 @@ export function ServiceRequests() {
               approved: 'Penugasan Mekanik',
               in_progress: 'Detail Servis',
               awaiting_payment: 'Pembayaran Servis',
+              completed: 'Detail Servis',
+              rejected: 'Detail Permintaan Servis',
             }[selectedRequest.status] ?? 'Detail Permintaan Servis')
             : 'Detail Permintaan Servis'
         }
@@ -458,6 +500,15 @@ export function ServiceRequests() {
                     </p>
                   </div>
                 )}
+
+                {selectedRequest.mechanic_notes && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Catatan Mekanik</p>
+                    <p className="text-gray-900 dark:text-white">
+                      {selectedRequest.mechanic_notes}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -465,6 +516,31 @@ export function ServiceRequests() {
               <>
                 <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-700 dark:text-gray-200">
                   <p>Mekanik: <span className="font-medium text-gray-900 dark:text-white">{selectedRequest.mechanic?.full_name ?? '-'}</span></p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 rounded-lg border border-dashed border-gray-200 p-3 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-200 md:grid-cols-2">
+                  <div>
+                    <p className="text-xs uppercase text-gray-400 dark:text-gray-500">Nilai DP</p>
+                    <p className="text-base font-semibold text-gray-900 dark:text-white">
+                      {selectedRequest.down_payment ? formatCurrency(selectedRequest.down_payment) : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-gray-400 dark:text-gray-500">Sisa Pembayaran</p>
+                    {editForm.totalCost ? (
+                      <p
+                        className={`text-base font-semibold ${
+                          parseFloat(editForm.totalCost || '0') - (selectedRequest.down_payment ?? 0) < 0
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-gray-900 dark:text-white'
+                        }`}
+                      >
+                        {formatCurrency(parseFloat(editForm.totalCost || '0') - (selectedRequest.down_payment ?? 0))}
+                      </p>
+                    ) : (
+                      <p className="text-base font-semibold text-gray-400">-</p>
+                    )}
+                  </div>
                 </div>
 
                 <Input
@@ -511,6 +587,106 @@ export function ServiceRequests() {
                 </div>
               </>
             )}
+
+            {(selectedRequest.status === 'completed' || selectedRequest.status === 'rejected') && (
+              <div className="space-y-3 rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-600 dark:border-gray-600 dark:text-gray-200">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Pemilik</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {selectedRequest.customer?.full_name ?? '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Mobil</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {selectedRequest.vehicle?.make} {selectedRequest.vehicle?.model}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {selectedRequest.vehicle?.license_plate}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Mekanik</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {selectedRequest.mechanic?.full_name ?? '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
+                    <span className={`inline-flex px-2 py-1 text-xs rounded-full ${getStatusColor(selectedRequest.status)}`}>
+                      {formatStatus(selectedRequest.status)}
+                    </span>
+                  </div>
+                </div>
+
+                {selectedRequest.admin_notes && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Catatan Admin</p>
+                    <p className="text-gray-900 dark:text-white">
+                      {selectedRequest.admin_notes}
+                    </p>
+                  </div>
+                )}
+
+                {selectedRequest.mechanic_notes && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Catatan Mekanik</p>
+                    <p className="text-gray-900 dark:text-white">
+                      {selectedRequest.mechanic_notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Laporan Kondisi Servis</p>
+              {detailLoading ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Memuat laporan...</p>
+              ) : detailProgress.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada laporan kondisi.</p>
+              ) : (
+                <div className="space-y-3">
+                  {detailProgress.map((progress) => {
+                    const photos = detailPhotos.filter((photo) => photo.service_progress_id === progress.id);
+                    return (
+                      <div key={progress.id} className="rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatDate(progress.progress_date)}
+                        </p>
+                        <p className="text-gray-900 dark:text-white">{progress.description}</p>
+                        {photos.length > 0 && (
+                          <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3">
+                            {photos.map((photo) => {
+                              const resolved = resolveImageUrl(photo.photo_url);
+                              return (
+                                <div key={photo.id} className="rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+                                  {resolved ? (
+                                    <img
+                                      src={resolved}
+                                      alt={photo.description ?? 'Foto progres servis'}
+                                      className="h-24 w-full rounded-md object-cover"
+                                    />
+                                  ) : (
+                                    <div className="flex h-24 items-center justify-center rounded-md bg-gray-100 text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                                      Foto tidak tersedia
+                                    </div>
+                                  )}
+                                  {photo.description && (
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{photo.description}</p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Modal>
