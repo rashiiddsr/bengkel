@@ -30,6 +30,8 @@ const SERVICE_TYPES = [
   'Inspeksi Kendaraan',
 ];
 
+const REFRESH_INTERVAL = 30000;
+
 export function MyRequests() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,8 +56,13 @@ export function MyRequests() {
   ).padStart(2, '0')}`;
 
   useEffect(() => {
+    if (!user) return;
     fetchRequests();
     fetchVehicles();
+    const intervalId = window.setInterval(() => {
+      fetchRequests();
+    }, REFRESH_INTERVAL);
+    return () => window.clearInterval(intervalId);
   }, [user]);
 
   useEffect(() => {
@@ -307,6 +314,15 @@ export function MyRequests() {
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Perkiraan Biaya</p>
                 <p className="text-xl font-bold text-gray-900 dark:text-white">
                   {formatCurrency(selectedRequest.estimated_cost)}
+                </p>
+              </div>
+            )}
+
+            {selectedRequest.down_payment !== null && selectedRequest.down_payment !== undefined && (
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Nilai DP</p>
+                <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                  {formatCurrency(selectedRequest.down_payment)}
                 </p>
               </div>
             )}

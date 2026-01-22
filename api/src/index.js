@@ -1,7 +1,11 @@
 import "dotenv/config";
 import cors from "cors";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import express from "express";
+import multer from "multer";
+import { fileURLToPath } from "url";
 import { getPool } from "./db.js";
 
 const app = express();
@@ -20,6 +24,29 @@ const cookieSecure =
     ? cookieSecureRaw === "true"
     : isProduction || cookieSameSite.toLowerCase() === "none";
 const sessionMaxAge = Number(process.env.SESSION_MAX_AGE || 60 * 60 * 24 * 7);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const imagesDir = path.resolve(__dirname, "../images");
+
+await fs.promises.mkdir(imagesDir, { recursive: true });
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, imagesDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname);
+      cb(null, `${crypto.randomUUID()}${ext}`);
+    },
+  }),
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype?.startsWith("image/")) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error("File harus berupa gambar"));
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
 
 app.use(
   cors({
@@ -34,6 +61,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use("/images", express.static(imagesDir));
 
 const parseCookies = (cookieHeader) => {
   if (!cookieHeader) return {};
@@ -102,6 +130,18 @@ app.get("/health", async (_req, res) => {
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
   }
+});
+
+app.post("/uploads", (req, res) => {
+  upload.single("image")(req, res, (error) => {
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: "File gambar wajib diunggah" });
+    }
+    res.status(201).json({ path: `/images/${req.file.filename}` });
+  });
 });
 
 app.get("/auth/session", async (req, res) => {

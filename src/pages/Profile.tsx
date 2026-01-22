@@ -3,16 +3,8 @@ import { Camera } from 'lucide-react';
 import { Card, CardBody, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input, TextArea } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { api } from '../lib/api';
+import { api, resolveImageUrl } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
-
-const fileToDataUrl = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Gagal membaca file gambar'));
-    reader.readAsDataURL(file);
-  });
 
 export function ProfilePage() {
   const { profile, user, refreshProfile } = useAuth();
@@ -28,12 +20,17 @@ export function ProfilePage() {
   });
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarObjectUrl, setAvatarObjectUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
     if (!user || !profile) return;
+    if (avatarObjectUrl) {
+      URL.revokeObjectURL(avatarObjectUrl);
+      setAvatarObjectUrl(null);
+    }
     setFormState({
       fullName: profile.full_name ?? '',
       username: user.username ?? '',
@@ -42,20 +39,28 @@ export function ProfilePage() {
       address: profile.address ?? '',
       password: '',
     });
-    setAvatarPreview(profile.avatar_url ?? null);
+    setAvatarPreview(resolveImageUrl(profile.avatar_url));
     setAvatarFile(null);
   }, [profile, user]);
 
-  const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    return () => {
+      if (avatarObjectUrl) {
+        URL.revokeObjectURL(avatarObjectUrl);
+      }
+    };
+  }, [avatarObjectUrl]);
+
+  const handleAvatarChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    try {
-      const dataUrl = await fileToDataUrl(file);
-      setAvatarPreview(dataUrl);
-      setAvatarFile(file);
-    } catch (err) {
-      setError((err as Error).message || 'Gagal membaca gambar.');
+    if (avatarObjectUrl) {
+      URL.revokeObjectURL(avatarObjectUrl);
     }
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarObjectUrl(previewUrl);
+    setAvatarPreview(previewUrl);
+    setAvatarFile(file);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -79,7 +84,7 @@ export function ProfilePage() {
       };
 
       if (avatarFile) {
-        profilePayload.avatar_url = await fileToDataUrl(avatarFile);
+        profilePayload.avatar_url = await api.uploadImage(avatarFile);
       }
 
       await api.updateProfile(profile.id, profilePayload);

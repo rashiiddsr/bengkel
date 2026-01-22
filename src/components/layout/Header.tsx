@@ -2,6 +2,7 @@ import { Menu, Bell, ChevronDown, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { resolveImageUrl } from '../../lib/api';
 
 interface HeaderProps {
   isSidebarOpen: boolean;
@@ -15,7 +16,7 @@ export function Header({ isSidebarOpen, onMenuClick }: HeaderProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const displayName = profile?.full_name ?? user?.email ?? 'Akun';
-  const avatarUrl = profile?.avatar_url ?? null;
+  const avatarUrl = resolveImageUrl(profile?.avatar_url ?? null);
   const roleLabel = useMemo(() => {
     const role = profile?.role ?? user?.role;
     if (!role) {

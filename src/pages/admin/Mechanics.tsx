@@ -3,7 +3,7 @@ import { Card, CardBody } from '../../components/ui/Card';
 import { Input, TextArea } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
-import { api, type UserProfile } from '../../lib/api';
+import { api, resolveImageUrl, type UserProfile } from '../../lib/api';
 import { Eye, Pencil, Plus, Search, Wrench } from 'lucide-react';
 
 export function Mechanics() {
@@ -201,7 +201,7 @@ export function Mechanics() {
                             <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center overflow-hidden">
                               {mechanic.avatar_url ? (
                                 <img
-                                  src={mechanic.avatar_url}
+                                  src={resolveImageUrl(mechanic.avatar_url) ?? ''}
                                   alt={mechanic.full_name}
                                   className="h-full w-full object-cover"
                                 />
