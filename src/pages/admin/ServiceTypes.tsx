@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Card, CardBody } from '../../components/ui/Card';
+import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Input, TextArea } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
@@ -96,14 +96,23 @@ export function ServiceTypes() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Daftar Layanan
-      </h1>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Daftar Layanan
+        </h1>
+        <Button onClick={handleAdd} className="inline-flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Tambah Layanan
+        </Button>
+      </div>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Daftar Layanan</CardTitle>
+        </CardHeader>
         <CardBody>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
-            <div className="relative w-full md:max-w-sm">
+          <div className="mb-4 w-full">
+            <div className="relative">
               <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
                 placeholder="Cari layanan..."
@@ -112,10 +121,6 @@ export function ServiceTypes() {
                 className="pl-10"
               />
             </div>
-            <Button onClick={handleAdd} className="inline-flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Tambah Layanan
-            </Button>
           </div>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>

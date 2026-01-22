@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, CardBody } from '../../components/ui/Card';
+import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -101,6 +101,9 @@ export function CompletedJobs() {
       </h1>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Daftar Pekerjaan Selesai</CardTitle>
+        </CardHeader>
         <CardBody>
           <div className="mb-4 w-full">
             <div className="relative">

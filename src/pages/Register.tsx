@@ -1,9 +1,9 @@
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Wrench } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Input, TextArea } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import logo from '../img.png';
 
 export function Register() {
   const navigate = useNavigate();
@@ -64,9 +64,9 @@ export function Register() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
           <div className="flex justify-center mb-8">
             <div className="flex items-center space-x-2">
-              <Wrench className="h-10 w-10 text-blue-600" />
+              <img src={logo} alt="BM AutoService" className="h-10 w-10 rounded-full object-cover" />
               <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                Bintang Motor Auto Service
+                BM AutoService
               </span>
             </div>
           </div>

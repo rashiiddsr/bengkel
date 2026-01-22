@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, CardBody } from '../../components/ui/Card';
+import { Card, CardBody, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { Input, Select, TextArea } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -218,37 +218,39 @@ export function ServiceRequests() {
         Daftar Servis
       </h1>
 
-      <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-12">
-        <div className="w-full lg:col-span-4">
-          <Select
-            options={[
-              { value: 'all', label: 'Semua Permintaan' },
-              { value: 'pending', label: 'Menunggu' },
-              { value: 'approved', label: 'Disetujui' },
-              { value: 'in_progress', label: 'Sedang Dikerjakan' },
-              { value: 'awaiting_payment', label: 'Menunggu Pembayaran' },
-              { value: 'completed', label: 'Selesai' },
-              { value: 'rejected', label: 'Ditolak' },
-            ]}
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          />
-        </div>
-        <div className="w-full lg:col-span-8">
-          <div className="relative">
-            <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <Input
-              placeholder="Cari permintaan servis..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-      </div>
-
       <Card>
+        <CardHeader>
+          <CardTitle>Daftar Permintaan Servis</CardTitle>
+        </CardHeader>
         <CardBody>
+          <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-12">
+            <div className="w-full lg:col-span-4">
+              <Select
+                options={[
+                  { value: 'all', label: 'Semua Permintaan' },
+                  { value: 'pending', label: 'Menunggu' },
+                  { value: 'approved', label: 'Disetujui' },
+                  { value: 'in_progress', label: 'Sedang Dikerjakan' },
+                  { value: 'awaiting_payment', label: 'Menunggu Pembayaran' },
+                  { value: 'completed', label: 'Selesai' },
+                  { value: 'rejected', label: 'Ditolak' },
+                ]}
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              />
+            </div>
+            <div className="w-full lg:col-span-8">
+              <div className="relative">
+                <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  placeholder="Cari permintaan servis..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </div>
           {loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">Memuat...</p>
           ) : requests.length === 0 ? (
