@@ -127,12 +127,15 @@ app.post("/auth/login", async (req, res) => {
   try {
     const pool = getPool();
     const [rows] = await pool.query(
-      "SELECT id, email, role FROM users WHERE email = ? AND password_hash = SHA2(?, 256)",
+      "SELECT id, email, role, is_active FROM users WHERE email = ? AND password_hash = SHA2(?, 256)",
       [email, password]
     );
     const user = rows[0];
     if (!user) {
       return res.status(401).json({ message: "Kredensial tidak valid" });
+    }
+    if (!user.is_active) {
+      return res.status(403).json({ message: "Akun tidak aktif" });
     }
 
     const [profileRows] = await pool.query("SELECT * FROM profiles WHERE id = ?", [user.id]);
@@ -196,17 +199,31 @@ app.get("/profiles", async (req, res) => {
     const filters = [];
     const values = [];
     if (req.query.id) {
-      filters.push("id = ?");
+      filters.push("profiles.id = ?");
       values.push(req.query.id);
     }
     if (req.query.role) {
-      filters.push("role = ?");
+      filters.push("profiles.role = ?");
       values.push(req.query.role);
+    }
+    if (req.query.active !== undefined) {
+      const isActive = String(req.query.active).toLowerCase() === "true" || req.query.active === "1";
+      filters.push("users.is_active = ?");
+      values.push(isActive ? 1 : 0);
     }
     const whereClause = filters.length ? ` WHERE ${filters.join(" AND ")}` : "";
     const orderClause = buildOrderClause(req.query.order, ["full_name", "created_at"]);
-    const [rows] = await pool.query(`SELECT * FROM profiles${whereClause}${orderClause}`, values);
-    res.json(rows);
+    const [rows] = await pool.query(
+      `SELECT profiles.*, users.email AS email, users.is_active AS is_active
+      FROM profiles
+      INNER JOIN users ON users.id = profiles.id${whereClause}${orderClause}`,
+      values
+    );
+    const response = rows.map((row) => ({
+      ...row,
+      is_active: Boolean(row.is_active),
+    }));
+    res.json(response);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -243,6 +260,44 @@ app.patch("/profiles/:id", async (req, res) => {
     const [rows] = await pool.query("SELECT * FROM profiles WHERE id = ?", [id]);
     res.json(rows[0] ?? null);
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.patch("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  const { email, password, is_active } = req.body ?? {};
+
+  if (email === undefined && password === undefined && is_active === undefined) {
+    return res.status(400).json({ message: "Tidak ada data yang diperbarui" });
+  }
+
+  try {
+    const pool = getPool();
+    const fields = [];
+    const values = [];
+
+    if (email !== undefined) {
+      fields.push("email = ?");
+      values.push(email);
+    }
+    if (password !== undefined) {
+      fields.push("password_hash = SHA2(?, 256)");
+      values.push(password);
+    }
+    if (is_active !== undefined) {
+      fields.push("is_active = ?");
+      values.push(is_active ? 1 : 0);
+    }
+
+    values.push(id);
+    await pool.query(`UPDATE users SET ${fields.join(", ")} WHERE id = ?`, values);
+    const [rows] = await pool.query("SELECT id, email, role, is_active FROM users WHERE id = ?", [id]);
+    res.json(rows[0] ?? null);
+  } catch (error) {
+    if (error?.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ message: "Email sudah terdaftar" });
+    }
     res.status(500).json({ message: error.message });
   }
 });

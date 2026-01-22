@@ -1,17 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Card, CardBody } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
-import { api, type ServiceRequestWithRelations } from '../../lib/api';
-import type { Profile, Vehicle } from '../../lib/database.types';
+import { api, type ServiceRequestWithRelations, type UserProfile } from '../../lib/api';
+import type { Vehicle } from '../../lib/database.types';
 import { Search, Users } from 'lucide-react';
 
 export function Customers() {
-  const [customers, setCustomers] = useState<Profile[]>([]);
+  const [customers, setCustomers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<Profile | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<UserProfile | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<UserProfile | null>(null);
+  const [editForm, setEditForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    password: '',
+  });
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState('');
   const [detailRequests, setDetailRequests] = useState<ServiceRequestWithRelations[]>([]);
   const [detailVehicles, setDetailVehicles] = useState<Vehicle[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -30,7 +40,15 @@ export function Customers() {
     setLoading(false);
   };
 
-  const handleDetail = async (customer: Profile) => {
+  useEffect(() => {
+    if (!selectedCustomer) return;
+    const updatedCustomer = customers.find((customer) => customer.id === selectedCustomer.id);
+    if (updatedCustomer) {
+      setSelectedCustomer(updatedCustomer);
+    }
+  }, [customers, selectedCustomer]);
+
+  const handleDetail = async (customer: UserProfile) => {
     setSelectedCustomer(customer);
     setDetailLoading(true);
     setDetailRequests([]);
@@ -47,10 +65,62 @@ export function Customers() {
     }
   };
 
+  const handleEdit = (customer: UserProfile) => {
+    setEditingCustomer(customer);
+    setEditForm({
+      fullName: customer.full_name ?? '',
+      email: customer.email ?? '',
+      phone: customer.phone ?? '',
+      address: customer.address ?? '',
+      password: '',
+    });
+    setEditError('');
+  };
+
+  const handleEditSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingCustomer) return;
+    setEditSubmitting(true);
+    setEditError('');
+
+    try {
+      await api.updateProfile(editingCustomer.id, {
+        full_name: editForm.fullName,
+        phone: editForm.phone || null,
+        address: editForm.address || null,
+      });
+
+      const userPayload: { email?: string; password?: string } = {
+        email: editForm.email.trim(),
+      };
+      if (editForm.password) {
+        userPayload.password = editForm.password;
+      }
+
+      await api.updateUser(editingCustomer.id, userPayload);
+
+      setEditingCustomer(null);
+      await fetchCustomers();
+    } catch (error) {
+      setEditError((error as Error).message || 'Gagal memperbarui pelanggan.');
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  const handleToggleActive = async (customer: UserProfile) => {
+    try {
+      await api.updateUser(customer.id, { is_active: !customer.is_active });
+      await fetchCustomers();
+    } catch (error) {
+      setEditError((error as Error).message || 'Gagal memperbarui status pelanggan.');
+    }
+  };
+
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredCustomers = customers.filter((customer) => {
     if (!normalizedSearch) return true;
-    const target = `${customer.full_name} ${customer.phone ?? ''} ${customer.address ?? ''}`.toLowerCase();
+    const target = `${customer.full_name} ${customer.email ?? ''} ${customer.phone ?? ''} ${customer.address ?? ''}`.toLowerCase();
     return target.includes(normalizedSearch);
   });
 
@@ -90,6 +160,9 @@ export function Customers() {
                       Nama
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
                       Telepon
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
@@ -118,15 +191,30 @@ export function Customers() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {customer.email || '-'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {customer.phone || '-'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                         {customer.address || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        <Button variant="secondary" size="sm" onClick={() => handleDetail(customer)}>
-                          Detail
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="secondary" size="sm" onClick={() => handleDetail(customer)}>
+                            Detail
+                          </Button>
+                          <Button variant="primary" size="sm" onClick={() => handleEdit(customer)}>
+                            Edit
+                          </Button>
+                          <Button
+                            variant={customer.is_active ? 'danger' : 'success'}
+                            size="sm"
+                            onClick={() => handleToggleActive(customer)}
+                          >
+                            {customer.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -155,12 +243,22 @@ export function Customers() {
                   <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.full_name}</p>
                 </div>
                 <div>
+                  <p className="text-gray-500 dark:text-gray-400">Email</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.email || '-'}</p>
+                </div>
+                <div>
                   <p className="text-gray-500 dark:text-gray-400">Telepon</p>
                   <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.phone || '-'}</p>
                 </div>
                 <div className="md:col-span-2">
                   <p className="text-gray-500 dark:text-gray-400">Alamat</p>
                   <p className="font-medium text-gray-900 dark:text-white">{selectedCustomer.address || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 dark:text-gray-400">Status</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {selectedCustomer.is_active ? 'Aktif' : 'Nonaktif'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -254,6 +352,55 @@ export function Customers() {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        isOpen={!!editingCustomer}
+        onClose={() => setEditingCustomer(null)}
+        title="Edit Pelanggan"
+      >
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          <Input
+            label="Nama Lengkap"
+            value={editForm.fullName}
+            onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+            required
+          />
+          <Input
+            label="Email"
+            type="email"
+            value={editForm.email}
+            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+            required
+          />
+          <Input
+            label="Password Baru (opsional)"
+            type="password"
+            value={editForm.password}
+            onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+          />
+          <Input
+            label="Telepon"
+            value={editForm.phone}
+            onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+          />
+          <Input
+            label="Alamat"
+            value={editForm.address}
+            onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+          />
+          {editError && (
+            <p className="text-sm text-red-600 dark:text-red-400">{editError}</p>
+          )}
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" type="button" onClick={() => setEditingCustomer(null)}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={editSubmitting}>
+              {editSubmitting ? 'Menyimpan...' : 'Simpan'}
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

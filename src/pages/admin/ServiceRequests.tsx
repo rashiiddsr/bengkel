@@ -39,7 +39,7 @@ export function ServiceRequests() {
   const fetchData = async () => {
     const [requestsRes, mechanicsRes] = await Promise.all([
       api.listServiceRequests({ include: 'customer,mechanic,vehicle', order: 'created_at.desc' }),
-      api.listProfiles({ role: 'mechanic', order: 'full_name.asc' }),
+      api.listProfiles({ role: 'mechanic', active: true, order: 'full_name.asc' }),
     ]);
 
     if (requestsRes) setRequests(requestsRes as RequestWithDetails[]);
