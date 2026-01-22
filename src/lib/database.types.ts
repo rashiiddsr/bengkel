@@ -78,10 +78,12 @@ export type Database = {
           service_type: string
           description: string | null
           preferred_date: string | null
-          status: 'pending' | 'approved' | 'in_progress' | 'parts_needed' | 'quality_check' | 'completed' | 'rejected'
+          status: 'pending' | 'approved' | 'in_progress' | 'awaiting_payment' | 'completed' | 'rejected'
           assigned_mechanic_id: string | null
           estimated_cost: number | null
-          final_cost: number | null
+          down_payment: number | null
+          total_cost: number | null
+          payment_method: 'cash' | 'non_cash' | null
           admin_notes: string | null
           mechanic_notes: string | null
           created_at: string
@@ -94,10 +96,12 @@ export type Database = {
           service_type: string
           description?: string | null
           preferred_date?: string | null
-          status?: 'pending' | 'approved' | 'in_progress' | 'parts_needed' | 'quality_check' | 'completed' | 'rejected'
+          status?: 'pending' | 'approved' | 'in_progress' | 'awaiting_payment' | 'completed' | 'rejected'
           assigned_mechanic_id?: string | null
           estimated_cost?: number | null
-          final_cost?: number | null
+          down_payment?: number | null
+          total_cost?: number | null
+          payment_method?: 'cash' | 'non_cash' | null
           admin_notes?: string | null
           mechanic_notes?: string | null
           created_at?: string
@@ -110,10 +114,12 @@ export type Database = {
           service_type?: string
           description?: string | null
           preferred_date?: string | null
-          status?: 'pending' | 'approved' | 'in_progress' | 'parts_needed' | 'quality_check' | 'completed' | 'rejected'
+          status?: 'pending' | 'approved' | 'in_progress' | 'awaiting_payment' | 'completed' | 'rejected'
           assigned_mechanic_id?: string | null
           estimated_cost?: number | null
-          final_cost?: number | null
+          down_payment?: number | null
+          total_cost?: number | null
+          payment_method?: 'cash' | 'non_cash' | null
           admin_notes?: string | null
           mechanic_notes?: string | null
           created_at?: string

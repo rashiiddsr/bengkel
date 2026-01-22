@@ -23,13 +23,16 @@ export function ServiceRequests() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [actionError, setActionError] = useState('');
 
   const [editForm, setEditForm] = useState({
-    status: '',
     assignedMechanicId: '',
+    downPayment: '',
     estimatedCost: '',
-    finalCost: '',
     adminNotes: '',
+    mechanicNotes: '',
+    totalCost: '',
+    paymentMethod: '',
   });
 
   useEffect(() => {
@@ -49,40 +52,99 @@ export function ServiceRequests() {
 
   const handleEdit = (request: RequestWithDetails) => {
     setSelectedRequest(request);
+    setActionError('');
     setEditForm({
-      status: request.status,
       assignedMechanicId: request.assigned_mechanic_id || '',
+      downPayment: request.down_payment?.toString() || '',
       estimatedCost: request.estimated_cost?.toString() || '',
-      finalCost: request.final_cost?.toString() || '',
       adminNotes: request.admin_notes || '',
+      mechanicNotes: request.mechanic_notes || '',
+      totalCost: request.total_cost?.toString() || '',
+      paymentMethod: request.payment_method || '',
     });
   };
 
-  const handleUpdate = async () => {
+  const handleApprove = async () => {
     if (!selectedRequest || !user) return;
 
+    await api.updateServiceRequest(selectedRequest.id, { status: 'approved' });
+    await api.createStatusHistory({
+      service_request_id: selectedRequest.id,
+      status: 'approved',
+      notes: 'Permintaan disetujui',
+      changed_by: user.id,
+    });
+
+    setSelectedRequest(null);
+    fetchData();
+  };
+
+  const handleReject = async () => {
+    if (!selectedRequest || !user) return;
+    window.alert('Permintaan yang ditolak akan menjadi tampilan saja dan tidak bisa diubah lagi.');
+    await api.updateServiceRequest(selectedRequest.id, { status: 'rejected' });
+    await api.createStatusHistory({
+      service_request_id: selectedRequest.id,
+      status: 'rejected',
+      notes: 'Permintaan ditolak',
+      changed_by: user.id,
+    });
+    setSelectedRequest(null);
+    fetchData();
+  };
+
+  const handleAssignMechanic = async () => {
+    if (!selectedRequest || !user) return;
+    if (!editForm.assignedMechanicId || !editForm.downPayment) {
+      setActionError('Penugasan mekanik dan DP wajib diisi.');
+      return;
+    }
+
     const updates: any = {
-      status: editForm.status,
-      assigned_mechanic_id: editForm.assignedMechanicId || null,
-      admin_notes: editForm.adminNotes,
+      status: 'in_progress',
+      assigned_mechanic_id: editForm.assignedMechanicId,
+      down_payment: parseFloat(editForm.downPayment),
+      admin_notes: editForm.adminNotes || null,
     };
 
     if (editForm.estimatedCost) {
       updates.estimated_cost = parseFloat(editForm.estimatedCost);
     }
 
-    if (editForm.finalCost) {
-      updates.final_cost = parseFloat(editForm.finalCost);
+    await api.updateServiceRequest(selectedRequest.id, updates);
+    await api.createStatusHistory({
+      service_request_id: selectedRequest.id,
+      status: 'in_progress',
+      notes: 'Mekanik ditugaskan dan servis dimulai.',
+      changed_by: user.id,
+    });
+
+    setSelectedRequest(null);
+    fetchData();
+  };
+
+  const handlePayment = async () => {
+    if (!selectedRequest || !user) return;
+    if (!editForm.totalCost || !editForm.paymentMethod) {
+      setActionError('Total biaya dan metode pembayaran wajib diisi.');
+      return;
     }
+
+    const updates: any = {
+      status: 'completed',
+      total_cost: parseFloat(editForm.totalCost),
+      mechanic_notes: editForm.mechanicNotes || null,
+      payment_method: editForm.paymentMethod,
+    };
 
     await api.updateServiceRequest(selectedRequest.id, updates);
     await api.createStatusHistory({
-        service_request_id: selectedRequest.id,
-        status: editForm.status,
-        notes: `Diperbarui oleh admin: ${editForm.adminNotes}`,
-        changed_by: user.id,
-      });
-
+      service_request_id: selectedRequest.id,
+      status: 'completed',
+      notes: 'Pembayaran diperbarui dan servis selesai.',
+      changed_by: user.id,
+    });
+    window.alert('Pembayaran berhasil diperbarui.');
     setSelectedRequest(null);
     fetchData();
   };
@@ -92,8 +154,7 @@ export function ServiceRequests() {
       pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
       approved: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
       in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      parts_needed: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-      quality_check: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+      awaiting_payment: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
       completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
       rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
     };
@@ -119,21 +180,23 @@ export function ServiceRequests() {
         Daftar Servis
       </h1>
 
-      <div className="mb-4 flex flex-col gap-3">
-        <div className="w-full">
+      <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-12">
+        <div className="w-full lg:col-span-4">
           <Select
             options={[
               { value: 'all', label: 'Semua Permintaan' },
               { value: 'pending', label: 'Menunggu' },
               { value: 'approved', label: 'Disetujui' },
               { value: 'in_progress', label: 'Sedang Dikerjakan' },
+              { value: 'awaiting_payment', label: 'Menunggu Pembayaran' },
               { value: 'completed', label: 'Selesai' },
+              { value: 'rejected', label: 'Ditolak' },
             ]}
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           />
         </div>
-        <div className="w-full">
+        <div className="w-full lg:col-span-8">
           <div className="relative">
             <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <Input
@@ -205,22 +268,26 @@ export function ServiceRequests() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
-                        {request.final_cost
-                          ? formatCurrency(request.final_cost)
+                        {request.total_cost
+                          ? formatCurrency(request.total_cost)
                           : request.estimated_cost
                             ? `~${formatCurrency(request.estimated_cost)}`
                             : '-'}
                       </td>
                       <td className="px-4 py-4">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleEdit(request)}
-                          title="Edit Permintaan"
-                          aria-label="Edit Permintaan"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        {['pending', 'approved', 'in_progress', 'awaiting_payment'].includes(request.status) ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleEdit(request)}
+                            title="Kelola Permintaan"
+                            aria-label="Kelola Permintaan"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Tidak ada aksi</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -233,12 +300,29 @@ export function ServiceRequests() {
 
       <Modal
         isOpen={!!selectedRequest}
-        onClose={() => setSelectedRequest(null)}
-        title="Edit Permintaan Servis"
+        onClose={() => {
+          setSelectedRequest(null);
+          setActionError('');
+        }}
+        title={
+          selectedRequest
+            ? ({
+              pending: 'Tinjau Permintaan Servis',
+              approved: 'Penugasan Mekanik',
+              in_progress: 'Detail Servis',
+              awaiting_payment: 'Pembayaran Servis',
+            }[selectedRequest.status] ?? 'Detail Permintaan Servis')
+            : 'Detail Permintaan Servis'
+        }
         size="lg"
       >
         {selectedRequest && (
           <div className="space-y-4">
+            {actionError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/40 dark:text-red-200">
+                {actionError}
+              </div>
+            )}
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Pelanggan</p>
               <p className="font-medium text-gray-900 dark:text-white">
@@ -262,65 +346,128 @@ export function ServiceRequests() {
               </div>
             )}
 
-            <Select
-              label="Status"
-              options={[
-                { value: 'pending', label: 'Menunggu' },
-                { value: 'approved', label: 'Disetujui' },
-                { value: 'in_progress', label: 'Sedang Dikerjakan' },
-                { value: 'parts_needed', label: 'Menunggu Suku Cadang' },
-                { value: 'quality_check', label: 'Pemeriksaan Kualitas' },
-                { value: 'completed', label: 'Selesai' },
-                { value: 'rejected', label: 'Ditolak' },
-              ]}
-              value={editForm.status}
-              onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-            />
+            {selectedRequest.status === 'pending' && (
+              <div className="flex flex-wrap gap-3 pt-2">
+                <Button onClick={handleApprove}>Setujui</Button>
+                <Button variant="secondary" onClick={handleReject}>
+                  Tolak
+                </Button>
+              </div>
+            )}
 
-            <Select
-              label="Tugaskan Mekanik"
-              options={[
-                { value: '', label: 'Belum Ditugaskan' },
-                ...mechanics.map(m => ({ value: m.id, label: m.full_name })),
-              ]}
-              value={editForm.assignedMechanicId}
-              onChange={(e) => setEditForm({ ...editForm, assignedMechanicId: e.target.value })}
-            />
+            {selectedRequest.status === 'approved' && (
+              <>
+                <Select
+                  label={
+                    <>
+                      Tugaskan Mekanik <span className="text-red-500">*</span>
+                    </>
+                  }
+                  options={[
+                    { value: '', label: 'Pilih mekanik' },
+                    ...mechanics.map(m => ({ value: m.id, label: m.full_name })),
+                  ]}
+                  value={editForm.assignedMechanicId}
+                  onChange={(e) => setEditForm({ ...editForm, assignedMechanicId: e.target.value })}
+                />
 
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                type="number"
-                label="Perkiraan Biaya"
-                placeholder="0.00"
-                value={editForm.estimatedCost}
-                onChange={(e) => setEditForm({ ...editForm, estimatedCost: e.target.value })}
-                step="0.01"
-              />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <Input
+                    type="number"
+                    label={
+                      <>
+                        Nilai DP <span className="text-red-500">*</span>
+                      </>
+                    }
+                    placeholder="0.00"
+                    value={editForm.downPayment}
+                    onChange={(e) => setEditForm({ ...editForm, downPayment: e.target.value })}
+                    step="0.01"
+                  />
 
-              <Input
-                type="number"
-                label="Biaya Akhir"
-                placeholder="0.00"
-                value={editForm.finalCost}
-                onChange={(e) => setEditForm({ ...editForm, finalCost: e.target.value })}
-                step="0.01"
-              />
-            </div>
+                  <Input
+                    type="number"
+                    label="Perkiraan Biaya"
+                    placeholder="0.00"
+                    value={editForm.estimatedCost}
+                    onChange={(e) => setEditForm({ ...editForm, estimatedCost: e.target.value })}
+                    step="0.01"
+                  />
+                </div>
 
-            <TextArea
-              label="Catatan Admin"
-              placeholder="Tambahkan catatan..."
-              value={editForm.adminNotes}
-              onChange={(e) => setEditForm({ ...editForm, adminNotes: e.target.value })}
-              rows={3}
-            />
+                <TextArea
+                  label="Catatan Admin"
+                  placeholder="Tambahkan catatan..."
+                  value={editForm.adminNotes}
+                  onChange={(e) => setEditForm({ ...editForm, adminNotes: e.target.value })}
+                  rows={3}
+                />
 
-            <div className="flex space-x-4 pt-4">
-              <Button onClick={handleUpdate}>Perbarui Permintaan</Button>
-              <Button variant="secondary" onClick={() => setSelectedRequest(null)}>
-                Batal
-              </Button>
-            </div>
+                <div className="flex space-x-4 pt-4">
+                  <Button onClick={handleAssignMechanic}>Simpan Penugasan</Button>
+                  <Button variant="secondary" onClick={() => setSelectedRequest(null)}>
+                    Batal
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {selectedRequest.status === 'in_progress' && (
+              <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-300">
+                Detail servis akan tersedia pada pembaruan berikutnya.
+              </div>
+            )}
+
+            {selectedRequest.status === 'awaiting_payment' && (
+              <>
+                <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-700 dark:text-gray-200">
+                  <p>Mekanik: <span className="font-medium text-gray-900 dark:text-white">{selectedRequest.mechanic?.full_name ?? '-'}</span></p>
+                </div>
+
+                <Input
+                  type="number"
+                  label={
+                    <>
+                      Total Biaya <span className="text-red-500">*</span>
+                    </>
+                  }
+                  placeholder="0.00"
+                  value={editForm.totalCost}
+                  onChange={(e) => setEditForm({ ...editForm, totalCost: e.target.value })}
+                  step="0.01"
+                />
+
+                <TextArea
+                  label="Catatan Mekanik"
+                  placeholder="Tambahkan catatan mekanik..."
+                  value={editForm.mechanicNotes}
+                  onChange={(e) => setEditForm({ ...editForm, mechanicNotes: e.target.value })}
+                  rows={3}
+                />
+
+                <Select
+                  label={
+                    <>
+                      Metode Pembayaran <span className="text-red-500">*</span>
+                    </>
+                  }
+                  options={[
+                    { value: '', label: 'Pilih metode pembayaran' },
+                    { value: 'cash', label: 'Tunai' },
+                    { value: 'non_cash', label: 'Nontunai' },
+                  ]}
+                  value={editForm.paymentMethod}
+                  onChange={(e) => setEditForm({ ...editForm, paymentMethod: e.target.value })}
+                />
+
+                <div className="flex space-x-4 pt-4">
+                  <Button onClick={handlePayment}>Perbarui Pembayaran</Button>
+                  <Button variant="secondary" onClick={() => setSelectedRequest(null)}>
+                    Batal
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </Modal>

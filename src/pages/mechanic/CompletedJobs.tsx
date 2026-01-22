@@ -113,7 +113,7 @@ export function CompletedJobs() {
                         {job.customer?.full_name}
                       </td>
                       <td className="px-4 py-4 text-sm font-medium text-green-600 dark:text-green-400">
-                        {job.final_cost ? formatCurrency(job.final_cost) : '-'}
+                        {job.total_cost ? formatCurrency(job.total_cost) : '-'}
                       </td>
                       <td className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
                         {formatDate(job.updated_at)}
@@ -200,11 +200,11 @@ export function CompletedJobs() {
                   </p>
                 </div>
               )}
-              {selectedJob.final_cost && (
+              {selectedJob.total_cost && (
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Biaya Akhir</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Biaya</p>
                   <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                    {formatCurrency(selectedJob.final_cost)}
+                    {formatCurrency(selectedJob.total_cost)}
                   </p>
                 </div>
               )}

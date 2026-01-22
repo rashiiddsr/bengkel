@@ -31,7 +31,7 @@ export function MechanicDashboard() {
 
     setStats({
       total: data.length,
-      inProgress: data.filter(r => ['approved', 'in_progress', 'parts_needed', 'quality_check'].includes(r.status)).length,
+      inProgress: data.filter(r => ['in_progress', 'awaiting_payment'].includes(r.status)).length,
       completed: data.filter(r => r.status === 'completed').length,
     });
     setRecentJobs(data.slice(0, 5));
@@ -128,8 +128,8 @@ export function MechanicDashboard() {
                   <span
                     className={`
                       px-3 py-1 rounded-full text-sm font-medium
-                      ${job.status === 'approved' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : ''}
                       ${job.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : ''}
+                      ${job.status === 'awaiting_payment' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' : ''}
                       ${job.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ''}
                     `}
                   >

@@ -41,7 +41,7 @@ export function Mechanics() {
 
         stats[mechanic.id] = {
           total: requests.length || 0,
-          inProgress: requests.filter(r => ['approved', 'in_progress', 'parts_needed', 'quality_check'].includes(r.status)).length || 0,
+          inProgress: requests.filter(r => ['in_progress', 'awaiting_payment'].includes(r.status)).length || 0,
           completed: requests.filter(r => r.status === 'completed').length || 0,
         };
       }

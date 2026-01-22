@@ -48,6 +48,10 @@ export function MyRequests() {
     description: '',
     preferredDate: '',
   });
+  const today = new Date();
+  const minPreferredDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+    today.getDate(),
+  ).padStart(2, '0')}`;
 
   useEffect(() => {
     fetchRequests();
@@ -143,8 +147,7 @@ export function MyRequests() {
       pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
       approved: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
       in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      parts_needed: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-      quality_check: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+      awaiting_payment: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
       completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
       rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
     };
@@ -308,11 +311,11 @@ export function MyRequests() {
               </div>
             )}
 
-            {selectedRequest.final_cost && (
+            {selectedRequest.total_cost && (
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Biaya Akhir</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Biaya</p>
                 <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                  {formatCurrency(selectedRequest.final_cost)}
+                  {formatCurrency(selectedRequest.total_cost)}
                 </p>
               </div>
             )}
@@ -423,6 +426,7 @@ export function MyRequests() {
             }
             value={formData.preferredDate}
             onChange={(e) => setFormData({ ...formData, preferredDate: e.target.value })}
+            min={minPreferredDate}
             required
           />
 

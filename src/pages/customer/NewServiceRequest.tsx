@@ -42,6 +42,10 @@ export function NewServiceRequest() {
     year: new Date().getFullYear(),
     licensePlate: '',
   });
+  const today = new Date();
+  const minPreferredDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+    today.getDate(),
+  ).padStart(2, '0')}`;
 
   useEffect(() => {
     fetchVehicles();
@@ -238,6 +242,7 @@ export function NewServiceRequest() {
               label="Tanggal Servis yang Diinginkan"
               value={formData.preferredDate}
               onChange={(e) => setFormData({ ...formData, preferredDate: e.target.value })}
+              min={minPreferredDate}
             />
 
             <div className="flex space-x-4">
